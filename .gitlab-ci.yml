@@ -1,0 +1,15 @@
+stages:
+  - build
+  - deploy
+
+include:
+  - local: ".gitlab-ci.develop.yml"
+    rules:
+      - if: $CI_COMMIT_BRANCH == "develop_api"
+
+dummy_job:
+  stage: build
+  script:
+    - echo "Dummy job"
+  rules:
+    - when: never

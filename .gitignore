@@ -1,0 +1,49 @@
+# compiled output
+dist
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+
+# Tests
+/coverage
+/.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+
+services/**/.vscode/*
+
+# App
+/data/tempo-data/
+/data/loki-data/
+/data/logs/
+
+# dotenv environment variable files
+.env
+.env.dev
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+.editorconfig
+docker-compose.dev.yml

@@ -1,0 +1,42 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_REGISTRY_USER: developervgames
+  DOCKER_IMAGE_NAME: support-it-dev-backend-api
+  DOCKER_REPOSITORY_NAME: developervgames/support-it-dev-backend-api
+  REGISTRY: docker.io
+
+build-develop:
+  stage: build
+  before_script:
+    - echo "Logging into Docker registry..."
+    - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_TOKEN $REGISTRY
+  script:
+    - echo "Building Docker image $DOCKER_REPOSITORY_NAME:$CI_COMMIT_SHORT_SHA"
+    - docker build -t $DOCKER_REPOSITORY_NAME:$CI_COMMIT_SHORT_SHA -f services/api-service/Dockerfile services/api-service
+    - docker tag $DOCKER_REPOSITORY_NAME:$CI_COMMIT_SHORT_SHA $DOCKER_REPOSITORY_NAME:latest
+    - docker push $DOCKER_REPOSITORY_NAME:$CI_COMMIT_SHORT_SHA
+    - docker push $DOCKER_REPOSITORY_NAME:latest
+  only:
+    - develop_api
+  tags:
+    - azure
+    - gitlab-runner-3
+deploy-develop:
+  stage: deploy
+  before_script:
+    - git clone https://oauth2:$GITLAB_ACCESS_TOKEN@gitlab.mylittlefungames.company/vgameslab/general/do-k8s-manifest.git
+    - cd do-k8s-manifest/support-it
+  script:
+    - export REPOSITORY_NAME=$DOCKER_REPOSITORY_NAME
+    - sed -i "s/support-it-dev-backend-api:.*/support-it-dev-backend-api:${CI_COMMIT_SHORT_SHA}/g" support-it-api-develop/deployment.yaml
+    - git add support-it-api-develop/deployment.yaml
+    - git commit -am "update support-it api develop image with commit ${CI_COMMIT_SHORT_SHA} by ${CI_COMMIT_AUTHOR}"
+    - git push origin main
+  only:
+    - develop_api
+  tags:
+    - azure
+    - gitlab-runner-3
