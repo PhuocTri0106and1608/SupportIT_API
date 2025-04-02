@@ -9,7 +9,7 @@ import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import process from "process";
 
 const metricReader = new PrometheusExporter({
-    port: 8081
+    port: 3000
 });
 
 const traceExporter = new OTLPTraceExporter({

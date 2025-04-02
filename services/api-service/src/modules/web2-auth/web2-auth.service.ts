@@ -139,20 +139,19 @@ export class Web2AuthService {
         };
     }
 
-    async verifyLoginOauth2(data: { email: string; name: string; avatar: string; preAuthData: {accessToken?: string; refreshToken?: string } }) {
+    async verifyLoginOauth2(data: { email: string; name: string; avatar: string; accessToken?: string; refreshToken?: string }) {
         const normalizedEmail = data.email.toLowerCase();
 
         const user = await this.userRepository.findOne({ email: normalizedEmail });
         if (user) {
         }
-
         return {
             code: CodeResponseEnum.SUCCESS,
             data: {
                 name: data.name,
                 avatar: data.avatar,
-                googleAccessToken: data.preAuthData.accessToken,
-                googleRefreshToken: data.preAuthData.refreshToken,
+                googleAccessToken: data.accessToken,
+                googleRefreshToken: data?.refreshToken,
                 email: normalizedEmail
             }
         };

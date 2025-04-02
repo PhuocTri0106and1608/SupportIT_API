@@ -61,7 +61,7 @@ export class UserService {
                     email: email,
                     loginTime: 1,
                     lastLoginDate: new Date(),
-                    name: name || `Default ${Math.random().toString(36).substring(2, 15)}`,
+                    name: name || email.split("@")[0],
                     avatar,
                     googleAccessToken,
                     googleRefreshToken

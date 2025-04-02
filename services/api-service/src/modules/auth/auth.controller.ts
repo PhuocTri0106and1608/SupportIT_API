@@ -7,6 +7,7 @@ import { Response } from "express";
 import { AuthService } from "./auth.service";
 import { LoginRequestDto, UserExternalProfileDto } from "./dtos";
 import { IAuthPayload } from "./interfaces";
+import { AuthGuard } from "@common/guards";
 
 @ApiTags("Auth")
 @ApiBearerAuth("access-token")
@@ -22,9 +23,11 @@ export class AuthController {
     }
 
     @Post("logout")
+    @UseGuards(AuthGuard)
     @ApiOkResponse({ type: ResponseType })
     @HttpCode(HttpStatus.OK)
     public async logout(@CurrentUser() req: IAuthPayload) {
+        console.log("req", req);
         return this.authService.logoutSession(req.id, req.sessionId);
     }
 
