@@ -27,4 +27,5 @@ export interface IUserExternalProfile {
     name: string;
     avatar: string;
     accessToken: string;
+    refreshToken: string;
 }

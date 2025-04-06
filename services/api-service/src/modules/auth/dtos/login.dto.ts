@@ -20,13 +20,6 @@ export class LoginRequest_DataDto extends PartialType(UserExternalProfileDto) {
 
 export class LoginRequestDto {
     @ApiProperty({
-        enum: LoginProviderEnum,
-        example: LoginProviderEnum.WEB2
-    })
-    @IsEnum(LoginProviderEnum)
-    provider: LoginProviderEnum;
-
-    @ApiProperty({
         enum: LoginStepEnum,
         example: LoginStepEnum.REQUEST
     })

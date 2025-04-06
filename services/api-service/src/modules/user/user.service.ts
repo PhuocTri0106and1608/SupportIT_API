@@ -1,10 +1,11 @@
-import { CodeResponseEnum } from "@common/enums";
+import { CodeResponseEnum, LoginRoleEnum } from "@common/enums";
 import { env } from "@environments";
 import { IAuthPayload } from "@modules/auth/interfaces";
 import { logger } from "@modules/logger";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { BloomFilter } from "bloom-filters";
 import { UserRepository } from "./repositories";
+import { UserDocument } from "./schemas";
 
 @Injectable()
 export class UserService {
@@ -22,7 +23,7 @@ export class UserService {
         this.userEmailBloomFilter = BloomFilter.create(env.bloomFilter.SIZE, env.bloomFilter.FALSE_POSITIVE_RATE);
 
         try {
-            const users = await this.userRepository.findAndCustomSelect({}, { walletAddress: 1, email: 1 });
+            const users = await this.userRepository.findAndCustomSelect({}, { email: 1 });
             users.forEach((user) => {
                 if (user.email) {
                     this.userEmailBloomFilter.add(user.email.toLowerCase());
@@ -36,10 +37,6 @@ export class UserService {
         }
     }
 
-    async getUserBloomFilter(walletAddress: string) {
-        return this.userBloomFilter.has(walletAddress.toLowerCase());
-    }
-
     async getUserEmailBloomFilter(email: string) {
         return this.userEmailBloomFilter.has(email.toLowerCase());
     }
@@ -50,22 +47,26 @@ export class UserService {
         avatar?: string;
         googleAccessToken?: string;
         googleRefreshToken?: string;
-    }) {
-        const { email, name, avatar, googleAccessToken, googleRefreshToken } = request;
+        role?: LoginRoleEnum;
+    }): Promise<UserDocument> {
+        const { email, name, avatar, googleAccessToken, googleRefreshToken, role } = request;
 
         try {
-            const existingUser = await this.userRepository.findOne({ email: email });
+            const existingUser = await this.userRepository.findOne({ email: email }, false);
 
             if (!existingUser) {
-                const user = await this.userRepository.create({
+                const newUser = {
                     email: email,
                     loginTime: 1,
                     lastLoginDate: new Date(),
                     name: name || email.split("@")[0],
                     avatar,
                     googleAccessToken,
-                    googleRefreshToken
-                });
+                    googleRefreshToken,
+                    roles: [role]
+                };
+
+                const user = await this.userRepository.create(newUser) as UserDocument;
 
                 if (email) {
                     this.userEmailBloomFilter.add(email.toLowerCase());
@@ -73,15 +74,29 @@ export class UserService {
                 return user;
             }
 
-            await this.userRepository.findOneAndUpdate(
+            const currentRoles = existingUser.roles || [];
+            if (role && !currentRoles.includes(role)) {
+                currentRoles.push(role);
+            }
+
+            const updatedUser = await this.userRepository.findOneAndUpdate(
                 { email: email },
                 {
                     $inc: { loginTime: 1 },
-                    $set: { lastLoginDate: new Date() }
-                }
-            );
+                    $set: {
+                        lastLoginDate: new Date(),
+                        roles: currentRoles,
+                        avatar: avatar || existingUser.avatar,
+                        name: name || existingUser.name,
+                        googleAccessToken: googleAccessToken || existingUser.googleAccessToken,
+                        googleRefreshToken: googleRefreshToken || existingUser.googleRefreshToken
+                    }
+                },
+                { new: true, upsert: false },
+                false
+            ) as UserDocument;
 
-            return existingUser;
+            return updatedUser;
         } catch (error) {
             throw new HttpException("createUser error", HttpStatus.INTERNAL_SERVER_ERROR, {
                 cause: error

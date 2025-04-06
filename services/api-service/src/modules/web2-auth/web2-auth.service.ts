@@ -1,5 +1,5 @@
 import { MESSAGE_CODES } from "@common/constants";
-import { CodeResponseEnum, LoginStepEnum, LoginTypeEnum } from "@common/enums";
+import { CodeResponseEnum, LoginRoleEnum, LoginStepEnum, LoginTypeEnum } from "@common/enums";
 import { env } from "@environments";
 import { EmailType, MailQueueService, OtpEmailData } from "@modules/bull-queue";
 import { GoogleService } from "@modules/google";
@@ -21,7 +21,7 @@ export class Web2AuthService {
         private readonly mailQueueService: MailQueueService
     ) {}
 
-    async getLoginRequest(req: { type: LoginTypeEnum; data: any }) {
+    async getLoginRequest(req: { type: LoginTypeEnum; data: any }, role: LoginRoleEnum) {
         try {
             switch (req.type) {
                 case LoginTypeEnum.WEB2_EMAIL_OTP:
@@ -31,10 +31,7 @@ export class Web2AuthService {
                         throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR, { cause: error });
                     }
                 case LoginTypeEnum.WEB2_GOOGLE_OAUTH2:
-                    const authUrl = await this.googleService.getOauth2AuthorUrl({
-                        walletAddress: req.data.walletAddress,
-                        referralCode: req.data.referralCode
-                    });
+                    const authUrl = await this.googleService.getOauth2AuthorUrl({}, role);
 
                     return {
                         code: CodeResponseEnum.SUCCESS,
@@ -53,7 +50,7 @@ export class Web2AuthService {
                     };
             }
         } catch (error) {
-            throw new HttpException("evm getLoginRequest error", HttpStatus.INTERNAL_SERVER_ERROR, {
+            throw new HttpException("getLoginRequest error", HttpStatus.INTERNAL_SERVER_ERROR, {
                 cause: error
             });
         }
@@ -77,7 +74,7 @@ export class Web2AuthService {
                     };
             }
         } catch (error) {
-            throw new HttpException("evm verifyLoginRequest error", HttpStatus.INTERNAL_SERVER_ERROR, {
+            throw new HttpException("verifyLoginRequest error", HttpStatus.INTERNAL_SERVER_ERROR, {
                 cause: error
             });
         }
@@ -150,7 +147,7 @@ export class Web2AuthService {
             data: {
                 name: data.name,
                 avatar: data.avatar,
-                googleAccessToken: data.accessToken,
+                googleAccessToken: data?.accessToken,
                 googleRefreshToken: data?.refreshToken,
                 email: normalizedEmail
             }

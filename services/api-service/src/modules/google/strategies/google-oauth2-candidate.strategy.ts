@@ -11,14 +11,14 @@ import { GoogleModule } from "../google.module";
 import { IUserExternalProfile } from "../interfaces";
 
 @Injectable()
-export class GoogleOAuth2Strategy extends PassportStrategy(Strategy, "google") {
+export class GoogleOAuth2CandidateStrategy extends PassportStrategy(Strategy, "google-candidate") {
     constructor(private readonly redisService: RedisService) {
         super({
             authorizationURL: env.oauth2[OAuthProvidersEnum.GOOGLE].AUTHORIZATION_URL,
             tokenURL: env.oauth2[OAuthProvidersEnum.GOOGLE].TOKEN_URL,
             clientID: env.oauth2[OAuthProvidersEnum.GOOGLE].CLIENT_ID,
             clientSecret: env.oauth2[OAuthProvidersEnum.GOOGLE].CLIENT_SECRET,
-            callbackURL: env.oauth2[OAuthProvidersEnum.GOOGLE].REDIRECT_URL,
+            callbackURL: env.oauth2[OAuthProvidersEnum.GOOGLE].CANDIDATE_REDIRECT_URL,
             scope: ["profile", "email"],
             // CSRF
             state: false,
@@ -26,20 +26,22 @@ export class GoogleOAuth2Strategy extends PassportStrategy(Strategy, "google") {
         });
     }
 
-    async generateState(preAuthData: { walletAddress?: string; referralCode?: string }): Promise<string> {
+    async generateState(preAuthData: {}): Promise<string> {
         const state = uuidv4();
         await this.redisService.set(`:${GoogleModule.name}:${OAuthProvidersEnum.GOOGLE}:${state}`, preAuthData, { ttl: 10 * 60 }); // Expires in 10 minutes
         return state;
     }
 
-    async getAuthorizeUrl(preAuthData: { walletAddress?: string; referralCode?: string }): Promise<string> {
+    async getAuthorizeUrl(preAuthData: { }): Promise<string> {
         const state = await this.generateState(preAuthData);
         const params = new URLSearchParams({
             response_type: "code",
             client_id: env.oauth2[OAuthProvidersEnum.GOOGLE].CLIENT_ID,
-            redirect_uri: env.oauth2[OAuthProvidersEnum.GOOGLE].REDIRECT_URL,
+            redirect_uri: env.oauth2[OAuthProvidersEnum.GOOGLE].CANDIDATE_REDIRECT_URL,
             scope: "profile email",
-            state: state
+            state: state,
+            prompt: "consent",
+            access_type: "offline"
         });
 
         return `${env.oauth2[OAuthProvidersEnum.GOOGLE].AUTHORIZATION_URL}?${params.toString()}`;
@@ -53,7 +55,8 @@ export class GoogleOAuth2Strategy extends PassportStrategy(Strategy, "google") {
                 email: emails[0].value,
                 name: `${name.givenName} ${name.familyName}`,
                 avatar: photos[0].value,
-                accessToken
+                accessToken,
+                refreshToken
             };
 
             done(null, user);

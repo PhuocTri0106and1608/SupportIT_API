@@ -35,6 +35,8 @@ services/**/.vscode/*
 /data/tempo-data/
 /data/loki-data/
 /data/logs/
+/data/grafana-data/
+/data/redis-data/
 
 # dotenv environment variable files
 .env
