@@ -6,9 +6,10 @@ import { UserRepository } from "./repositories/user.repository";
 import { User, UserSchema } from "./schemas/user.schema";
 import { UserController } from "./user.controller";
 import { UserService } from "./user.service";
+import { CandidateModule } from "@modules/candidate/candidate.module";
 
 @Module({
-    imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),  RedisModule, BullQueueModule],
+    imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),  RedisModule, BullQueueModule, CandidateModule],
     providers: [UserService, UserRepository],
     exports: [UserService, UserRepository],
     controllers: [UserController]

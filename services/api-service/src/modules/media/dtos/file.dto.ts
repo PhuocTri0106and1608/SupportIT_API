@@ -6,7 +6,7 @@ export class UploadFileDto {
         type: "string",
         format: "binary"
     })
-    image: any;
+    file: any;
 }
 
 export class DeleteFileDto {

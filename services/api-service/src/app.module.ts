@@ -9,7 +9,7 @@ import { env } from "@environments";
 import { BullModule } from "@nestjs/bullmq";
 import { AppController } from "./app.controller";
 import { AllExceptionsFilter, RequestTimeoutInterceptor, TransformInterceptor } from "./common";
-import { AdminModule, AuthModule, BullQueueModule, HealthModule, LoggerModule, MailerModule, MediaModule, RedisModule, UserModule, Web2AuthModule, WorkerModule } from "./modules";
+import { AdminModule, AuthModule, BullQueueModule, CVModule, HealthModule, LoggerModule, MailerModule, MediaModule, RedisModule, UserModule, Web2AuthModule, WorkerModule, CandidateModule } from "./modules";
 
 // const OpenTelemetryModuleConfig = OpenTelemetryModule.forRoot({
 //     metrics: {
@@ -20,7 +20,7 @@ import { AdminModule, AuthModule, BullQueueModule, HealthModule, LoggerModule, M
 //     }
 // });
 
-const modules = [LoggerModule, HealthModule, WorkerModule, RedisModule, UserModule, AuthModule, BullQueueModule, MailerModule, Web2AuthModule, AdminModule, MediaModule];
+const modules = [LoggerModule, HealthModule, WorkerModule, RedisModule, UserModule, AuthModule, BullQueueModule, MailerModule, Web2AuthModule, AdminModule, MediaModule, CandidateModule, CVModule];
 
 @Module({
     imports: [

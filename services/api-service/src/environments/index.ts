@@ -44,7 +44,9 @@ const {
     DIGITAL_OCEAN_ENDPOINT,
     DIGITAL_OCEAN_ACCESS_KEY_ID,
     DIGITAL_OCEAN_ACCESS_KEY,
-    CDN_URL
+    CDN_URL,
+    REVIEW_CV_URL,
+    EVALUATE_INTERVIEW_URL
 } = process.env;
 
 enum EnvEnum {
@@ -105,6 +107,10 @@ if (!DIGITAL_OCEAN_PUBLIC_BUCKET || !DIGITAL_OCEAN_REGION || !DIGITAL_OCEAN_ENDP
     throw new Error(
         "DIGITAL_OCEAN_PUBLIC_BUCKET || DIGITAL_OCEAN_REGION || DIGITAL_OCEAN_ENDPOINT || DIGITAL_OCEAN_ACCESS_KEY_ID || DIGITAL_OCEAN_ACCESS_KEY || CDN_URL env is not define"
     );
+}
+
+if (!REVIEW_CV_URL || !EVALUATE_INTERVIEW_URL) {
+    throw new Error("REVIEW_CV_URL || EVALUATE_INTERVIEW_URL env is not define");
 }
 
 export const env = {
@@ -204,5 +210,10 @@ export const env = {
         ACCESS_KEY_ID: DIGITAL_OCEAN_ACCESS_KEY_ID,
         ACCESS_KEY: DIGITAL_OCEAN_ACCESS_KEY,
         CDN_URL
+    },
+
+    flask: {
+        REVIEW_CV_URL,
+        EVALUATE_INTERVIEW_URL
     }
 } as const;

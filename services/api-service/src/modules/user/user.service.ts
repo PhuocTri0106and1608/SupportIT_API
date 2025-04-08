@@ -6,14 +6,15 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { BloomFilter } from "bloom-filters";
 import { UserRepository } from "./repositories";
 import { UserDocument } from "./schemas";
-
+import { CandidateRepository } from "@modules/candidate/repositories";
 @Injectable()
 export class UserService {
     private userBloomFilter: BloomFilter;
     private userEmailBloomFilter: BloomFilter;
 
     constructor(
-        private readonly userRepository: UserRepository
+        private readonly userRepository: UserRepository,
+        private readonly candidateRepository: CandidateRepository
     ) {
         this.initBloomFilter();
     }
@@ -67,13 +68,26 @@ export class UserService {
                 };
 
                 const user = await this.userRepository.create(newUser) as UserDocument;
+                switch (role) {
+                    case LoginRoleEnum.CANDIDATE:
+                        await this.candidateRepository.create({ userId: user._id.toString() });
+                        break;
+                    default:
+                        break;
+                }
 
                 if (email) {
                     this.userEmailBloomFilter.add(email.toLowerCase());
                 }
                 return user;
             }
-
+            // switch (role) {
+            //     case LoginRoleEnum.CANDIDATE:
+            //         await this.candidateRepository.create({ userId: existingUser._id.toString() });
+            //         break;
+            //     default:
+            //         break;
+            // }
             const currentRoles = existingUser.roles || [];
             if (role && !currentRoles.includes(role)) {
                 currentRoles.push(role);
