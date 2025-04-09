@@ -12,3 +12,4 @@ export * from "./web2-auth/web2-auth.module";
 export * from "./worker/worker.module";
 export * from "./candidate/candidate.module";
 export * from "./cv/cv.module";
+export * from "./interview/interview.module";

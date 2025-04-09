@@ -1,4 +1,4 @@
-import { CurrentUser } from "@common/decorators";
+import { AnyRole, CurrentUser } from "@common/decorators";
 import { AuthGuard } from "@common/guards";
 import { Controller, Get, UseGuards, Post, Body, Delete, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiBody, ApiConsumes, ApiTags } from "@nestjs/swagger";
@@ -8,11 +8,14 @@ import { ResponseType } from "@common/dtos";
 import { DeleteFileDto, UploadFileDto } from "@modules/media/dtos";
 import { MediaService } from "@modules/media/media.service";
 import { FileInterceptor } from "@nestjs/platform-express";
+import { AnyRoleGuard } from "@modules/auth/guards";
+import { LoginRoleEnum } from "@common/enums";
 
 @Controller("cvs")
 @ApiTags("CVs")
 @ApiBearerAuth("access-token")
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, AnyRoleGuard)
+@AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER, LoginRoleEnum.ADMIN)
 export class CVController {
   constructor(
     private readonly cvService: CVService,

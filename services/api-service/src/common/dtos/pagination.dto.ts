@@ -20,29 +20,28 @@ export class PageOptionsDto {
     @IsOptional()
     sortDirection = SortDirection.DESC;
 
-    @ApiPropertyOptional({ minimum: 1, default: 1 })
+    @ApiPropertyOptional({ type: Number, minimum: 1, default: 1 })
     @Type(() => Number)
     @IsInt()
     @Min(1)
     @IsOptional()
     page = 1;
 
-    @ApiPropertyOptional({ minimum: 1, maximum: 50, default: 10 })
+    @ApiPropertyOptional({ type: Number, minimum: 1, maximum: 50, default: 10 })
     @Type(() => Number)
     @IsInt()
-    @Min(1)
+    @Min(-1)
     @Max(50)
     @IsOptional()
     limit = 10;
 
     get sort(): { [key: string]: any } {
         const sortType: any = this.sortDirection === SortDirection.ASC ? 1 : -1;
-        const sortCond = { [this.sortBy]: sortType };
-        return sortCond;
+        return { [this.sortBy]: sortType };
     }
 
     get skip(): number {
-        return ((this.page || 1) - 1) * (this.limit || 10);
+        return this.limit === -1 ? 0 : (this.page - 1) * this.limit;
     }
 }
 

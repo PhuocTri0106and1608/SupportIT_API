@@ -27,9 +27,9 @@ export class AuthController {
 
     @Post("logout")
     @UseGuards(AuthGuard, AnyRoleGuard)
+    @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER, LoginRoleEnum.ADMIN)
     @ApiOkResponse({ type: ResponseType })
     @HttpCode(HttpStatus.OK)
-    @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER, LoginRoleEnum.ADMIN)
     public async logout(@CurrentUser() req: IAuthPayload) {
         return this.authService.logoutSession(req.id, req.sessionId);
     }
@@ -54,24 +54,4 @@ export class AuthController {
     async handleGoogleCallbackAdmin(@CurrentUser() user: UserExternalProfileDto, @Res() res: Response) {
         return this.authService.handleGoogleCallback(user, res, LoginRoleEnum.ADMIN);
     }
-
-    // @Post("admin-only")
-    // @UseGuards(JwtAccessTokenAuthGuard, RolesGuard)
-    // @ApiOkResponse({ type: ResponseType })
-    // @HttpCode(HttpStatus.OK)
-    // @Roles(LoginRoleEnum.ADMIN)
-    // public async adminOnly(@CurrentUser() req: IAuthPayload) {
-    //     // Chỉ admin mới có thể truy cập endpoint này
-    //     return { code: CodeResponseEnum.SUCCESS };
-    // }
-
-    // @Post("admin-or-recruiter")
-    // @UseGuards(JwtAccessTokenAuthGuard, AnyRoleGuard)
-    // @ApiOkResponse({ type: ResponseType })
-    // @HttpCode(HttpStatus.OK)
-    // @AnyRole(LoginRoleEnum.ADMIN, LoginRoleEnum.RECRUITER)
-    // public async adminOrRecruiter(@CurrentUser() req: IAuthPayload) {
-    //     // Admin hoặc Recruiter có thể truy cập endpoint này
-    //     return { code: CodeResponseEnum.SUCCESS };
-    // }
 }

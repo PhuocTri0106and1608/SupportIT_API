@@ -1,0 +1,18 @@
+export enum InterviewPosition {
+  FRONTEND = "FRONTEND",
+  BACKEND = "BACKEND",
+  DEVOPS = "DEVOPS",
+  DESIGNER = "DESIGNER",
+  BUSINESS_ANALYSIS = "BUSINESS_ANALYSIS",
+  TESTER = "TESTER",
+  PRODUCT_OWNER = "PRODUCT_OWNER",
+  TECH_LEAD = "TECH_LEAD"
+}
+
+export enum InterviewLevel {
+  INTERN = "INTERN",
+  FRESHER = "FRESHER",
+  JUNIOR = "JUNIOR",
+  MIDDLE = "MIDDLE",
+  SENIOR = "SENIOR"
+}
