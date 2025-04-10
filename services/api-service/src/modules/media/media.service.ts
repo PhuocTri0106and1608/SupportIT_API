@@ -1,67 +1,79 @@
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { ResponseType } from "@common/dtos";
-import { CodeResponseEnum } from "@common/enums";
-import { env } from "@environments";
-import { Injectable } from "@nestjs/common";
-import { slugify } from "@utils";
+import { Injectable } from '@nestjs/common';
+import { ResponseType } from '@common/dtos';
+import { CodeResponseEnum } from '@common/enums';
+import { v2 as cloudinary } from 'cloudinary';
+import { env } from '@environments';
+import { slugify } from '@utils';
+import toStream = require('buffer-to-stream');
 
 @Injectable()
 export class MediaService {
-    private s3Client: S3Client;
-
     constructor() {
-        this.s3Client = new S3Client({
-            forcePathStyle: false, // Configures to use subdomain/virtual calling format.
-            endpoint: env.digitalOcean.ENDPOINT,
-            region: env.digitalOcean.REGION,
-            credentials: {
-                accessKeyId: env.digitalOcean.ACCESS_KEY_ID,
-                secretAccessKey: env.digitalOcean.ACCESS_KEY
-            }
+        cloudinary.config({
+            cloud_name: env.cloudinary.CLOUD_NAME,
+            api_key: env.cloudinary.API_KEY,
+            api_secret: env.cloudinary.API_SECRET,
         });
     }
 
-    async uploadFileToPublicBucket(path: string, { file, fileName }: { file: Express.Multer.File; fileName: string }): Promise<ResponseType> {
-        const bucketName = env.digitalOcean.PUBLIC_BUCKET;
-        const parts = fileName.split(".");
-        const extension = parts.length > 1 ? parts.pop() : "";
-        const filename = parts.join(".");
-        const fileNameSlug = slugify(filename);
-        const key = `${path}/${Date.now().toString()}-${fileNameSlug}.${extension}`; // Unique key with UUID
+    async uploadFileToPublicBucket(
+        path: string,
+        {
+            file,
+            fileName,
+        }: {
+            file: Express.Multer.File;
+            fileName: string;
+        },
+    ): Promise<ResponseType> {
+        const parts = fileName.split('.');
+        const extension = parts.length > 1 ? parts.pop() : '';
+        const filename = slugify(parts.join('.'));
+        const public_id = `${path}/${Date.now().toString()}-${filename}`;
 
-        await this.s3Client.send(
-            new PutObjectCommand({
-                Bucket: bucketName,
-                Key: key,
-                Body: file.buffer,
-                ContentType: file.mimetype,
-                ACL: "public-read",
-                ContentLength: file.size // calculate length of buffer
-            })
-        );
-        // Return for aws s3 link
-        // return `https://${bucketName}.s3.amazonaws.com/${key}`
+        return new Promise((resolve, reject) => {
+            const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                    public_id,
+                    resource_type: 'auto', // hỗ trợ image, video, pdf,...
+                    folder: path,
+                },
+                (error, result) => {
+                    if (error) {
+                        reject({
+                            code: CodeResponseEnum.ERROR,
+                            message: 'Upload to Cloudinary failed',
+                            error,
+                        });
+                    } else {
+                        resolve({
+                            code: CodeResponseEnum.SUCCESS,
+                            data: {
+                                imageUrl: result.secure_url,
+                                publicId: result.public_id,
+                            },
+                        });
+                    }
+                },
+            );
 
-        // Return for link digital ocean
-        const imageUrl = `${env.digitalOcean.CDN_URL}/${key}`;
-        return {
-            code: CodeResponseEnum.SUCCESS,
-            data: {
-                imageUrl: imageUrl
-            }
-        };
+            toStream(file.buffer).pipe(uploadStream);
+        });
     }
 
-    async deleteFileFromPublicBucket(key: string): Promise<ResponseType> {
-        await this.s3Client.send(
-            new DeleteObjectCommand({
-                Bucket: env.digitalOcean.PUBLIC_BUCKET,
-                Key: key
-            })
-        );
+    async deleteFileFromPublicBucket(publicId: string): Promise<ResponseType> {
+        try {
+            await cloudinary.uploader.destroy(publicId, {
+                resource_type: 'auto',
+            });
 
-        return {
-            code: CodeResponseEnum.SUCCESS
-        };
+            return {
+                code: CodeResponseEnum.SUCCESS,
+            };
+        } catch (error) {
+            return {
+                code: CodeResponseEnum.ERROR,
+            };
+        }
     }
 }

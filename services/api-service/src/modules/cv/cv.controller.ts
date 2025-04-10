@@ -14,8 +14,8 @@ import { LoginRoleEnum } from "@common/enums";
 @Controller("cvs")
 @ApiTags("CVs")
 @ApiBearerAuth("access-token")
-@UseGuards(AuthGuard, AnyRoleGuard)
-@AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER, LoginRoleEnum.ADMIN)
+// @UseGuards(AuthGuard, AnyRoleGuard)
+// @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER, LoginRoleEnum.ADMIN)
 export class CVController {
   constructor(
     private readonly cvService: CVService,
@@ -27,32 +27,70 @@ export class CVController {
     return this.cvService.saveCV({ cv: request, userId: user.id });
   }
 
-  @ApiConsumes("multipart/form-data")
+  @ApiConsumes('multipart/form-data')
   @ApiBody({
-    type: UploadFileDto
+    type: UploadFileDto,
   })
-  @UseInterceptors(FileInterceptor("file"))
-  @Post("uploadCV")
-  @ApiOkResponse({ type: ResponseType<{ fileUrl: string }> })
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('uploadCV')
+  @ApiOkResponse({
+    description: 'Upload CV file to Cloudinary',
+    type: ResponseType<{ imageUrl: string; publicId: string }>,
+  })
   async uploadFile(
     @UploadedFile(
       new ParseFilePipe({
-        validators: [new MaxFileSizeValidator({ maxSize: 1_000_000 }), new FileTypeValidator({ fileType: /application\/(pdf|doc|docx)/ })]
-      })
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1_000_000 }), // 1MB
+          new FileTypeValidator({
+            fileType: /application\/(pdf|msword|vnd.openxmlformats-officedocument.wordprocessingml.document)/,
+          }),
+        ],
+      }),
     )
-    file: Express.Multer.File
-  ): Promise<ResponseType<{ fileUrl: string }>> {
-    return await this.mediaService.uploadFileToPublicBucket("support-it/cv", {
+    file: Express.Multer.File,
+  ): Promise<ResponseType<{ imageUrl: string; publicId: string }>> {
+    return await this.mediaService.uploadFileToPublicBucket('support-it/cv', {
       file: file,
-      fileName: file.originalname
+      fileName: file.originalname,
     });
   }
 
-  @UseInterceptors(FileInterceptor("file"))
-  @Delete("deleteFile")
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    type: UploadFileDto,
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('uploadImage')
+  @ApiOkResponse({
+    description: 'Upload image to Cloudinary',
+    type: ResponseType<{ imageUrl: string; publicId: string }>,
+  })
+  async uploadImage(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 2_000_000 }), // 2MB
+          new FileTypeValidator({
+            fileType: /image\/(jpeg|png|jpg|webp)/,
+          }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ): Promise<ResponseType<{ imageUrl: string; publicId: string }>> {
+    return await this.mediaService.uploadFileToPublicBucket('support-it/images', {
+      file: file,
+      fileName: file.originalname,
+    });
+  }
+
+  @Delete('deleteFile')
   @ApiOkResponse({ type: ResponseType })
   async deleteFile(@Body() body: DeleteFileDto): Promise<ResponseType> {
     return await this.mediaService.deleteFileFromPublicBucket(body.key);
   }
-
 }
+
+
+

@@ -46,7 +46,10 @@ const {
     DIGITAL_OCEAN_ACCESS_KEY,
     CDN_URL,
     REVIEW_CV_URL,
-    EVALUATE_INTERVIEW_URL
+    EVALUATE_INTERVIEW_URL,
+    CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY,
+    CLOUDINARY_API_SECRET
 } = process.env;
 
 enum EnvEnum {
@@ -184,6 +187,12 @@ export const env = {
             AUTHORIZATION_URL: GOOGLE_AUTHORIZATION_URL,
             TOKEN_URL: GOOGLE_TOKEN_URL
         }
+    },
+
+    cloudinary: {
+        CLOUD_NAME: CLOUDINARY_CLOUD_NAME,
+        API_KEY: CLOUDINARY_API_KEY,
+        API_SECRET: CLOUDINARY_API_SECRET,
     },
 
     otp: {
