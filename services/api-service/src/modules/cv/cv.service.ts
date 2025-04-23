@@ -2,7 +2,7 @@ import { CodeResponseEnum, LoginRoleEnum } from "@common/enums";
 import { IAuthPayload } from "@modules/auth/interfaces";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { CVRepository } from "./repositories";
-import { CVDocument, ReviewCVResponse } from "./schemas";
+import { CVDocument } from "./schemas";
 import { CVDto } from "./dtos";
 import axios from "axios";
 import { ResponseType } from "@common/dtos";
@@ -24,24 +24,20 @@ export class CVService {
     try {
       const candidate = await this.candidateRepository.findOne({ userId: userId });
 
-      const reviewCVResponse = await axios.post(`${env.flask.REVIEW_CV_URL}`, {
+      const response = await axios.post(`${env.flask.REVIEW_CV_URL}`, {
         cv_url: fileUrl,
         job_description: jobDescription
       });
-      const { job_description, experience_feedback, skill_match, summary, review } = reviewCVResponse.data;
-
-      const reviewResponseData: ReviewCVResponse = {
-        review,
-        experience_feedback,
-        skill_match,
-        summary
-      } 
+      if (!response || !response.data) {
+        throw new HttpException("Error in review CV", HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+      const reviewCVResponse = response.data;
 
       const cv = await this.CVRepository.create({
         candidateId: candidate._id,
         fileUrl,
-        jobDescription: job_description,
-        reviewCVResponse: reviewResponseData
+        jobDescription,
+        reviewCVResponse
       });
 
       await this.candidateRepository.findOneAndUpdate({

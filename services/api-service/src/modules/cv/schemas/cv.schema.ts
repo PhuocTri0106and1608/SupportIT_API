@@ -1,56 +1,63 @@
 import { BaseSchema } from "@common/schemas";
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument } from "mongoose";
+import { Type } from "class-transformer";
+import { IsArray, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
 
 export type CVDocument = HydratedDocument<CV>;
 
-export class ExperienceFeedback {
-  @Prop({ type: String })
-  exp_snippet: string;
+class ATSCheck {
+  @IsArray()
+  @IsString({ each: true })
+  formatting_tips: string[];
 
-  @Prop({ type: Number })
-  score: number;
+  @IsArray()
+  @IsString({ each: true })
+  issues: string[];
 
-  @Prop({ type: String })
-  suggestion: string;
+  @IsArray()
+  @IsString({ each: true })
+  recommendations: string[];
 }
 
-export class SkillMatch {
-  @Prop({ type: Number })
+class SkillsAnalysis {
+  @IsNumber()
   match_percent: number;
 
-  @Prop({ type: [String] })
+  @IsArray()
+  @IsString({ each: true })
   matched_skills: string[];
 
-  @Prop({ type: [String] })
+  @IsArray()
+  @IsString({ each: true })
   missing_skills: string[];
 }
 
-export class Summary {
-  @Prop({ type: String })
-  match_status: string;
+class Summary {
+  @IsString()
+  fit_level: string;
 
-  @Prop({ type: Number })
+  @IsNumber()
   similarity_score: number;
-
-  @Prop({ type: Number })
-  skill_match_percent: number;
 }
 
+@Schema({ _id: false, versionKey: false })
 export class ReviewCVResponse {
   @Prop({ type: String })
-  review: string;
+  ai_review: string;
 
-  @Prop({ type: [ExperienceFeedback] })
-  experience_feedback: ExperienceFeedback[];
+  @Prop({ type: Object })
+  @Type(() => ATSCheck)
+  ats_check: ATSCheck;
 
-  @Prop({ type: SkillMatch })
-  skill_match: SkillMatch;
+  @Prop({ type: Object })
+  @Type(() => SkillsAnalysis)
+  skills_analysis: SkillsAnalysis;
 
-  @Prop({ type: Summary })
+  @Prop({ type: Object })
+  @Type(() => Summary)
   summary: Summary;
 }
-
 
 @Schema({ timestamps: true, versionKey: false })
 export class CV extends BaseSchema {

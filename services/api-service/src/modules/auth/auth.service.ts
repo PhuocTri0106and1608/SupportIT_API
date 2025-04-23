@@ -64,7 +64,7 @@ export class AuthService {
                     sessionId,
                     roles
                 });
-
+                console.log("Access token", accessToken);
                 return {
                     code: CodeResponseEnum.SUCCESS,
                     data: {

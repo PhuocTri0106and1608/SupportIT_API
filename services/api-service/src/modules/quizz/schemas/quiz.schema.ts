@@ -14,14 +14,14 @@ export class Quiz extends BaseSchema {
       _id: false,
       question: { type: String },
       options: [String],
-      correctAnswer: String,
+      correctAnswer: Number,
       explanation: String,
     },
   ])
   questions: {
     question: string;
     options: string[];
-    correctAnswer: string;
+    correctAnswer: Number;
     explanation?: string;
   }[];
 }

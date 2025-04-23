@@ -6,6 +6,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { QuizRepository } from './repositories';
 import { decode } from 'html-entities';
+import { shuffleArray } from '@utils';
 
 @Injectable()
 export class CrawlerService {
@@ -84,7 +85,6 @@ export class CrawlerService {
 
     const $ = cheerio.load(res.data);
 
-    // Lấy tất cả script ld+json
     const jsonScripts = $('script[type="application/ld+json"]')
       .map((_, el) => $(el).html())
       .get();
@@ -107,19 +107,29 @@ export class CrawlerService {
 
     for (const q of quizData.hasPart || []) {
       const questionText = this.decodeHtml(q.text || q.name || '');
-      const options = (q.suggestedAnswer || []).map((opt) =>
+
+      const rawOptions = (q.suggestedAnswer || []).map((opt) =>
         this.decodeHtml(opt.text),
       );
-      const correctAnswer = this.decodeHtml(q.acceptedAnswer?.text || '');
-      const explanation = this.decodeHtml(
-        q.acceptedAnswer?.answerExplanation?.text || '',
-      );
 
-      if (questionText && options.length > 0) {
+      const correctText = this.decodeHtml(q.acceptedAnswer?.text || '');
+      const explanation = this.decodeHtml(q.acceptedAnswer?.answerExplanation?.text || '');
+
+      let options = [...rawOptions];
+      if (!options.includes(correctText)) {
+        options.push(correctText);
+      }
+
+      // Shuffle viết tay
+      options = shuffleArray(options);
+
+      const correctAnswerIndex = options.findIndex((opt) => opt === correctText);
+
+      if (questionText && options.length > 0 && correctAnswerIndex !== -1) {
         questions.push({
           question: questionText,
           options,
-          correctAnswer,
+          correctAnswer: correctAnswerIndex,
           explanation,
         });
       }
@@ -136,6 +146,7 @@ export class CrawlerService {
 
     this.logger.log(`✅ ${quizTitle}: ${questions.length} câu hỏi`);
   }
+
 
   decodeHtml(text: string): string {
     return decode(text); // dùng thư viện html-entities
