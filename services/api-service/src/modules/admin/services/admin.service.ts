@@ -14,8 +14,8 @@ export class AdminService {
         private readonly jwtService: JwtService
     ) {}
 
-    async getAdminByName(name: string): Promise<ResponseType> {
-        const res = await this.adminRepository.findOne({ name });
+    async getAdminByName(username: string): Promise<ResponseType> {
+        const res = await this.adminRepository.findOne({ username });
         return { data: res, code: res ? CodeResponseEnum.SUCCESS : CodeResponseEnum.ERROR };
     }
 

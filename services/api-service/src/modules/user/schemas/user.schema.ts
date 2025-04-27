@@ -25,6 +25,9 @@ export class User extends BaseSchema {
     @Prop({ type: String, nullable: true })
     googleRefreshToken: string;
 
+    @Prop({ type: Boolean, default: false })
+    canBeRecruiter: boolean;
+
     @Prop({ type: Date, default: Date.now })
     lastLoginDate: Date;
 

@@ -29,12 +29,9 @@ export class Admin extends BaseSchema {
     @Prop({ type: String, required: true })
     phoneNumber: string;
 
-    @Prop({ type: String, required: true })
-    role: string;
-
     @Prop({ type: [Permission], default: [] })
     permissions: Permission[];
 }
 
 export const AdminSchema = SchemaFactory.createForClass(Admin);
-AdminSchema.index({ deletedAt: 1, name: 1, role: 1 });
+AdminSchema.index({ deletedAt: 1, name: 1 });

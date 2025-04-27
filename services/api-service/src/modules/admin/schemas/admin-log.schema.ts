@@ -10,9 +10,6 @@ export class AdminLog extends BaseSchema {
     adminId: string;
 
     @Prop({ type: String })
-    role: string;
-
-    @Prop({ type: String })
     action: string;
 
     @Prop({ type: Object })
@@ -26,4 +23,4 @@ export class AdminLog extends BaseSchema {
 }
 
 export const AdminLogSchema = SchemaFactory.createForClass(AdminLog);
-AdminLogSchema.index({ deletedAt: 1, adminId: 1, action: 1, role: 1 });
+AdminLogSchema.index({ deletedAt: 1, adminId: 1, action: 1 });

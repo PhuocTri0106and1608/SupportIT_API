@@ -5,18 +5,15 @@ import { EmailType, MailQueueService, OtpEmailData } from "@modules/bull-queue";
 import { GoogleService } from "@modules/google";
 import { logger } from "@modules/logger";
 import { RedisService } from "@modules/redis";
-import { UserRepository, UserService } from "@modules/user";
+import { UserService } from "@modules/user";
 import { BadRequestException, HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { ethers } from "ethers";
 import otpGenerator from "otp-generator";
-import { encrypt } from "src/utils";
 
 @Injectable()
 export class Web2AuthService {
     constructor(
         private readonly googleService: GoogleService,
         private readonly redisService: RedisService,
-        private readonly userRepository: UserRepository,
         private readonly userService: UserService,
         private readonly mailQueueService: MailQueueService
     ) {}
@@ -124,7 +121,6 @@ export class Web2AuthService {
         this.redisService.del(`mail:${normalizedEmail}:otp`).catch((err) => logger.error(`Failed to delete OTP: ${err.message}`));
 
         const mayExistResult = await this.userService.getUserEmailBloomFilter(normalizedEmail);
-        const user = mayExistResult ? await this.userRepository.findOne({ email: normalizedEmail }) : null;
 
         return {
             code: CodeResponseEnum.SUCCESS,
@@ -138,10 +134,6 @@ export class Web2AuthService {
 
     async verifyLoginOauth2(data: { email: string; name: string; avatar: string; accessToken?: string; refreshToken?: string }) {
         const normalizedEmail = data.email.toLowerCase();
-
-        const user = await this.userRepository.findOne({ email: normalizedEmail });
-        if (user) {
-        }
         return {
             code: CodeResponseEnum.SUCCESS,
             data: {

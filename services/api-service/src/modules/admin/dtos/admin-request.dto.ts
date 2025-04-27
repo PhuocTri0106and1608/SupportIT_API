@@ -1,4 +1,4 @@
-import { AdminActionEnum, AdminRoleEnum, SubjectEnum } from "@common/enums";
+import { AdminActionEnum, SubjectEnum } from "@common/enums";
 import { ApiProperty, ApiResponseProperty } from "@nestjs/swagger";
 import { Type } from "class-transformer";
 import { IsArray, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength, ValidateNested } from "class-validator";
@@ -52,10 +52,6 @@ export class CreateAdminDto {
     })
     @IsNotEmpty()
     phoneNumber: string;
-
-    @ApiProperty({ enum: AdminRoleEnum })
-    @IsEnum(AdminRoleEnum)
-    role: string;
 
     @ApiProperty({ type: [PermissionsRequestDto] })
     @IsArray()

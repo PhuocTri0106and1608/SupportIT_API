@@ -21,7 +21,6 @@ export class QuizController {
   @Get('crawl')
   @CheckAbilites({ action: AdminActionEnum.CREATE, subject: SubjectEnum.QUIZZES })
   @UseGuards(JwtAccessTokenAuthGuard, AdminAbilitiesGuard)
-
   @ApiOkResponseCustom(ResponseType)
   async manualTrigger() {
     await this.crawlerService.crawlAllCategories();

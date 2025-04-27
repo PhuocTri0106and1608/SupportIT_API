@@ -6,14 +6,6 @@ export enum AdminActionEnum {
     DELETE = "delete"
 }
 
-export enum AdminRoleEnum {
-    CEO = "ceo",
-    PO = "po",
-    GD = "gd",
-    MONITOR = "monitor",
-    DEV = "dev"
-}
-
 export enum SubjectEnum {
     CANDIDATES = "candidates",
     ADMINS = "admins",

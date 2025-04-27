@@ -1,4 +1,4 @@
-import { AdminActionEnum, AdminRoleEnum, SubjectEnum } from "@common/enums";
+import { AdminActionEnum, SubjectEnum } from "@common/enums";
 import { ApiProperty, ApiResponseProperty } from "@nestjs/swagger";
 import { Exclude, Expose } from "class-transformer";
 
@@ -27,10 +27,6 @@ export class AdminResponseDto {
     @ApiResponseProperty()
     @Expose()
     readonly phoneNumber: string;
-
-    @ApiResponseProperty({ enum: AdminRoleEnum })
-    @Expose()
-    role: string;
 
     @ApiResponseProperty({ type: [AdminPermissionsResponseDto] })
     @Expose()

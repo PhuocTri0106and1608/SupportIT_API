@@ -7,6 +7,9 @@ import { BloomFilter } from "bloom-filters";
 import { UserRepository } from "./repositories";
 import { UserDocument } from "./schemas";
 import { CandidateRepository } from "@modules/candidate/repositories";
+import { ResponseType } from "@common/dtos";
+import { TokenPayloadAdminDto } from '../admin/dtos/admin-request.dto';
+import { AdminLogService } from "@modules/admin/services";
 @Injectable()
 export class UserService {
     private userBloomFilter: BloomFilter;
@@ -14,7 +17,8 @@ export class UserService {
 
     constructor(
         private readonly userRepository: UserRepository,
-        private readonly candidateRepository: CandidateRepository
+        private readonly candidateRepository: CandidateRepository,
+        private readonly adminLogService: AdminLogService
     ) {
         this.initBloomFilter();
     }
@@ -42,6 +46,29 @@ export class UserService {
         return this.userEmailBloomFilter.has(email.toLowerCase());
     }
 
+    async grantRecruiterPermission(email: string, admin: TokenPayloadAdminDto): Promise<ResponseType> {
+        const recruiter = await this.userRepository.findOneAndUpdate({ email: email.toLowerCase() }, { canBeRecruiter: true });
+
+        await this.adminLogService.createLog({
+            adminId: admin._id,
+            action: "GRANT_RECRUITER",
+            body: { email },
+            model: "User",
+            currentData: JSON.stringify(recruiter)
+        });
+
+        return {
+            code: CodeResponseEnum.SUCCESS,
+            data: {
+                _id: recruiter._id,
+                email: recruiter.email,
+                name: recruiter.name,
+                avatar: recruiter.avatar,
+                canBeRecruiter: true
+            }
+        }
+    }
+
     async createOrUpdateUser(request: {
         email?: string;
         name?: string;
@@ -64,7 +91,8 @@ export class UserService {
                     avatar,
                     googleAccessToken,
                     googleRefreshToken,
-                    roles: [role]
+                    roles: [role],
+                    canBeRecruiter: false
                 };
 
                 const user = await this.userRepository.create(newUser) as UserDocument;
@@ -81,13 +109,6 @@ export class UserService {
                 }
                 return user;
             }
-            // switch (role) {
-            //     case LoginRoleEnum.CANDIDATE:
-            //         await this.candidateRepository.create({ userId: existingUser._id.toString() });
-            //         break;
-            //     default:
-            //         break;
-            // }
             const currentRoles = existingUser.roles || [];
             if (role && !currentRoles.includes(role)) {
                 currentRoles.push(role);

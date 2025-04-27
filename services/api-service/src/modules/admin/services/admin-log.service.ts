@@ -7,7 +7,7 @@ import { AdminLog, AdminLogDocument } from "../schemas/admin-log.schema";
 export class AdminLogService {
     constructor(@InjectModel(AdminLog.name) private readonly adminLogModel: Model<AdminLogDocument>) {}
 
-    async createLog(data: { adminId: string; role: string; action: string; body: object; model: string; currentData: string }): Promise<void> {
+    async createLog(data: { adminId: string; action: string; body: object; model: string; currentData: string }): Promise<void> {
         try {
             await this.adminLogModel.create(data);
         } catch (error) {
