@@ -17,7 +17,7 @@ export class InterviewController {
   
   @Post("createInterview")
   @UseGuards(AuthGuard, RolesGuard)
-  @AnyRole(LoginRoleEnum.RECRUITER, LoginRoleEnum.ADMIN)
+  @AnyRole(LoginRoleEnum.RECRUITER)
   @ApiOkResponseCustom(ResponseType)
   async createInterview(@Body() request: CreateInterviewDto): Promise<ResponseType> {
     return await this.interviewService.createOrUpdateInterview(request);
@@ -25,7 +25,7 @@ export class InterviewController {
   
   @Get("getListInterviews")
   @UseGuards(AuthGuard, AnyRoleGuard)
-  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER, LoginRoleEnum.ADMIN)
+  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   @ApiOkResponseCustom(ResponseType)
   async getListInterviews(@Query() query: FilterInterviewRequestDto): Promise<ResponseType> {
     return await this.interviewService.getListInterviews(query);

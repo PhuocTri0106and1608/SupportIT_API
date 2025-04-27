@@ -19,136 +19,135 @@ export class CrawlerService {
 
   // @Cron('0 0 * * *') // chạy mỗi ngày lúc 00:00
   // async handleCron() {
-  //   this.logger.log('⏰ Cron started: Crawling GFG quizzes');
+  //   console.log('⏰ Cron started: Crawling GFG quizzes');
   //   await this.crawlAllCategories();
   // }
 
   async crawlAllCategories() {
     try {
-      const { data } = await axios.get(`${this.baseUrl}/quizzes/`);
-      const $ = cheerio.load(data);
-      const categoryLinks: { title: string; href: string }[] = [];
+      const { data } = await axios.get('https://www.geeksforgeeks.org/gfg-assets/_next/data/-uH_KENydbtNja4B62K3E/quizzes.json');
+      const categories = data?.pageProps?.quizCategoryData ?? [];
 
-      $('a[href^="/quizzes/?category="]').each((_, el) => {
-        const href = $(el).attr('href');
-        const title = $(el).text().trim();
+      console.log(`🔍 Crawling all categories recursively...`);
 
-        // Lọc các link có text rõ ràng
-        if (href && title && !title.toLowerCase().includes('view all')) {
-          categoryLinks.push({ title, href: `${this.baseUrl}${href}` });
-        }
-      });
-
-      for (const cat of categoryLinks) {
-        this.logger.log(`🔍 Crawling category: ${cat.title}`);
+      // Đệ quy lấy quiz từ từng category
+      const crawlCategory = async (slug: string, categoryName: string) => {
         try {
-          await this.crawlQuizzesInCategory(cat.href, cat.title);
+          console.log(`📂 Fetching quizzes from category: ${categoryName} (slug: ${slug})`);
+
+          const url = `https://www.geeksforgeeks.org/gfg-assets/_next/data/-uH_KENydbtNja4B62K3E/quizzes.json?category=${slug}`;
+          const { data: catData } = await axios.get(url);
+
+          const quizzes = catData?.pageProps?.quizLandingPageData?.results ?? [];
+
+          if (quizzes.length === 0) {
+            console.log(`ℹ️ No quizzes found under category: ${categoryName}`);
+            return;
+          }
+
+          for (const quiz of quizzes) {
+            const quizSlug = quiz.slug;
+            const quizTitle = quiz.title;
+            console.log(`📝 Crawling quiz: ${quizTitle} (slug: ${quizSlug})`);
+
+            await this.crawlQuizDetail(quizSlug, categoryName, quizTitle);
+          }
         } catch (err) {
-          this.logger.warn(`⚠️ Skip category (error): ${cat.title}`);
+          console.error(`❌ Failed to crawl category: ${categoryName} (${slug})`, err);
         }
-      }
+      };
+
+      // Đệ quy traverse category tree
+      const traverseCategories = async (cats: any[], parentName: string = '') => {
+        for (const cat of cats) {
+          const currentCategoryName = parentName ? `${parentName} > ${cat.name}` : cat.name;
+
+          // Nếu category này có children => đệ quy sâu hơn
+          if (cat.children && cat.children.length > 0) {
+            await traverseCategories(cat.children, currentCategoryName);
+          }
+
+          // Luôn crawl quiz của category hiện tại
+          await crawlCategory(cat.slug, currentCategoryName);
+        }
+      };
+
+      await traverseCategories(categories);
+
+      console.log(`✅ Completed crawling all categories.`);
     } catch (err) {
-      this.logger.error('❌ Failed to load categories');
+      console.error('❌ Failed to load initial categories from API', err);
     }
   }
 
-  async crawlQuizzesInCategory(categoryUrl: string, categoryTitle: string) {
-    const res = await axios.get(categoryUrl);
-    const $ = cheerio.load(res.data);
-    const quizLinks = [];
 
-    $('a[href*="/quizzes/"]').each((_, el) => {
-      const href = $(el).attr('href');
-      const title = $(el).text().trim();
-      const isQuizPage = href && href.includes('/quizzes/') && !href.includes('?category=');
-
-      if (isQuizPage && title.length > 0) {
-        quizLinks.push({ title, href });
-      }
-    });
-
-    for (const quiz of quizLinks) {
-      try {
-        await this.crawlQuizDetail(quiz.href, categoryTitle, quiz.title.split(':')[0].trim());
-      } catch (err) {
-        this.logger.warn(`⚠️ Skip quiz (login/protected): ${quiz.title.split(':')[0].trim()}`);
-      }
-    }
-  }
-
-  async crawlQuizDetail(url: string, category: string, quizTitle: string) {
-    const res = await axios.get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-      },
-    });
-
-    const $ = cheerio.load(res.data);
-
-    const jsonScripts = $('script[type="application/ld+json"]')
-      .map((_, el) => $(el).html())
-      .get();
-
-    const quizJsonRaw = jsonScripts.find((txt) => txt?.includes('"@type":"Quiz"'));
-    if (!quizJsonRaw) {
-      console.warn('❌ Không tìm thấy dữ liệu Quiz trong script JSON');
-      return;
-    }
-
-    let quizData;
-    try {
-      quizData = JSON.parse(quizJsonRaw);
-    } catch (err) {
-      console.error('❌ Lỗi parse JSON:', err);
-      return;
-    }
-
+  async crawlQuizDetail(slug: string, category: string, quizTitle: string) {
+    let page = 1;
+    const pageSize = 10;
     const questions = [];
 
-    for (const q of quizData.hasPart || []) {
-      const questionText = this.decodeHtml(q.text || q.name || '');
+    while (true) {
+      try {
+        const res = await axios.get(`https://apiwrite.geeksforgeeks.org/quiz/gfg/${slug}/?page_size=${pageSize}&page=${page}`);
+        const data = res.data;
 
-      const rawOptions = (q.suggestedAnswer || []).map((opt) =>
-        this.decodeHtml(opt.text),
-      );
+        if (!data.results || data.results.length === 0) {
+          console.warn(`⚠️ No questions found for quiz: https://apiwrite.geeksforgeeks.org/quiz/gfg/${slug}/?page_size=${pageSize}&page=${page}`);
+          break;
+        }
 
-      const correctText = this.decodeHtml(q.acceptedAnswer?.text || '');
-      const explanation = this.decodeHtml(q.acceptedAnswer?.answerExplanation?.text || '');
+        for (const q of data.results || []) {
+          const questionText = this.decodeHtml(q.question || '');
+          const rawOptions = q.answers.map((opt) => this.decodeHtml(opt.answer));
+          const correctAnswerText = q.answers.find((opt) => opt.correct)?.answer || '';
+          const explanation = this.decodeHtml(q.explanation || '');
 
-      let options = [...rawOptions];
-      if (!options.includes(correctText)) {
-        options.push(correctText);
-      }
+          let options = [...rawOptions];
+          if (correctAnswerText && !options.includes(correctAnswerText)) {
+            options.push(correctAnswerText);
+          }
 
-      // Shuffle viết tay
-      options = shuffleArray(options);
+          options = shuffleArray(options);
+          const correctAnswerIndex = options.findIndex((opt) => opt === correctAnswerText);
 
-      const correctAnswerIndex = options.findIndex((opt) => opt === correctText);
+          if (questionText && options.length > 0 && correctAnswerIndex !== -1) {
+            questions.push({
+              question: questionText,
+              options,
+              correctAnswer: correctAnswerIndex,
+              explanation,
+            });
+          }
+        }
 
-      if (questionText && options.length > 0 && correctAnswerIndex !== -1) {
-        questions.push({
-          question: questionText,
-          options,
-          correctAnswer: correctAnswerIndex,
-          explanation,
-        });
+        if (!data.next) break;
+        page++;
+      } catch (err) {
+        console.warn(`⚠️ Failed to fetch page ${page} for quiz: ${quizTitle}: ${slug}`);
+        break;
       }
     }
 
     if (questions.length > 0) {
+      // Chuyển category từ "AI-ML-DS > Deep Learning" thành ["AI-ML-DS", "Deep Learning"]
+      const categories = category.split('>').map(c => c.trim());
+
       await this.quizRepository.create({
         title: quizTitle,
-        category,
+        categories,
+        sourceUrl: `https://www.geeksforgeeks.org/quizzes/${slug}/`,
         questions,
-        sourceUrl: url,
       });
-    }
 
-    this.logger.log(`✅ ${quizTitle}: ${questions.length} câu hỏi`);
+      console.log(`✅ Saved quiz: ${quizTitle} with ${questions.length} questions`);
+    } else {
+      console.log(`ℹ️ No questions found for quiz: ${quizTitle}`);
+    }
   }
 
 
   decodeHtml(text: string): string {
-    return decode(text); // dùng thư viện html-entities
+    return decode(text);
   }
+
 }

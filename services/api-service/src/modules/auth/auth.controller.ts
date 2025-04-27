@@ -1,6 +1,6 @@
 import { CurrentUser } from "@common/decorators";
 import { ResponseType } from "@common/dtos";
-import { GoogleOAuth2AdminGuard, GoogleOAuth2CandidateGuard, GoogleOAuth2RecruiterGuard } from "@modules/google/guards";
+import { GoogleOAuth2CandidateGuard, GoogleOAuth2RecruiterGuard } from "@modules/google/guards";
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Res, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { Response } from "express";
@@ -27,7 +27,7 @@ export class AuthController {
 
     @Post("logout")
     @UseGuards(AuthGuard, AnyRoleGuard)
-    @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER, LoginRoleEnum.ADMIN)
+    @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
     @ApiOkResponse({ type: ResponseType })
     @HttpCode(HttpStatus.OK)
     public async logout(@CurrentUser() req: IAuthPayload) {
@@ -48,10 +48,10 @@ export class AuthController {
         return this.authService.handleGoogleCallback(user, res, LoginRoleEnum.RECRUITER);
     }
 
-    @Get("google/callback/admin")
-    @UseGuards(GoogleOAuth2AdminGuard)
-    @HttpCode(HttpStatus.FOUND)
-    async handleGoogleCallbackAdmin(@CurrentUser() user: UserExternalProfileDto, @Res() res: Response) {
-        return this.authService.handleGoogleCallback(user, res, LoginRoleEnum.ADMIN);
-    }
+    // @Get("google/callback/admin")
+    // @UseGuards(GoogleOAuth2AdminGuard)
+    // @HttpCode(HttpStatus.FOUND)
+    // async handleGoogleCallbackAdmin(@CurrentUser() user: UserExternalProfileDto, @Res() res: Response) {
+    //     return this.authService.handleGoogleCallback(user, res, LoginRoleEnum.ADMIN);
+    // }
 }

@@ -15,15 +15,10 @@ export enum AdminRoleEnum {
 }
 
 export enum SubjectEnum {
-    USERS = "users",
-    USER_REFS = "user_refs",
+    CANDIDATES = "candidates",
     ADMINS = "admins",
-    PUBLISHERS = "publishers",
-    QUESTS = "quests",
-    ACHIEVEMENT = "achievements",
+    RECRUITERS = "recruiters",
+    QUIZZES = "quizzes",
     IMAGE = "images",
-    GAME_CATEGORIES = "game_categories",
-    GAMES = "games",
-    CHAIN_CONFIG = "chain_config",
     ALL = "all"
 }

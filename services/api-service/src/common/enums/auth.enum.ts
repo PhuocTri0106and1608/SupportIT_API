@@ -24,7 +24,6 @@ export enum TokenTypeEnum {
 }
 
 export enum LoginRoleEnum {
-    ADMIN = "admin",
     CANDIDATE = "candidate",
     RECRUITER = "recruiter"
 }

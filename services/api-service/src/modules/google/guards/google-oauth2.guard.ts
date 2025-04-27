@@ -52,26 +52,26 @@ export class GoogleOAuth2CandidateGuard extends AuthGuard("google-candidate") {
     }
 }
 
-@Injectable()
-export class GoogleOAuth2AdminGuard extends AuthGuard("google-admin") {
-    constructor(private readonly redisService: RedisService) {
-        super();
-    }
+// @Injectable()
+// export class GoogleOAuth2AdminGuard extends AuthGuard("google-admin") {
+//     constructor(private readonly redisService: RedisService) {
+//         super();
+//     }
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
-        const request = context.switchToHttp().getRequest();
-        const state = request.query.state;
+//     async canActivate(context: ExecutionContext): Promise<boolean> {
+//         const request = context.switchToHttp().getRequest();
+//         const state = request.query.state;
 
-        if (!state) return false; // No state provided
+//         if (!state) return false; // No state provided
 
-        const storedPreAuthData = await this.redisService.get(`:${GoogleModule.name}:${OAuthProvidersEnum.GOOGLE}:${state}`);
+//         const storedPreAuthData = await this.redisService.get(`:${GoogleModule.name}:${OAuthProvidersEnum.GOOGLE}:${state}`);
 
-        if (!storedPreAuthData) return false; // Invalid state
+//         if (!storedPreAuthData) return false; // Invalid state
 
-        this.redisService.del(`:${GoogleModule.name}:${OAuthProvidersEnum.GOOGLE}:${state}`);
+//         this.redisService.del(`:${GoogleModule.name}:${OAuthProvidersEnum.GOOGLE}:${state}`);
 
-        request.preAuthData = storedPreAuthData;
+//         request.preAuthData = storedPreAuthData;
 
-        return super.canActivate(context) as boolean;
-    }
-}
+//         return super.canActivate(context) as boolean;
+//     }
+// }

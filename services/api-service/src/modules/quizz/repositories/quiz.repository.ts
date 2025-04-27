@@ -10,13 +10,13 @@ export class QuizRepository extends BaseMongoRepository<Quiz> {
     super(quizModel);
   }
 
-  async getAllCategories(): Promise<string[]> {
+  async getAllCategories(): Promise<string[][]> {
     const result = await this.quizModel.aggregate([
-      { $match: { category: { $ne: null } } },
-      { $group: { _id: '$category' } },
-      { $sort: { _id: 1 } }
+      { $match: { categories: { $exists: true, $ne: [] } } },
+      { $project: { categories: 1 } },
     ]).exec();
 
-    return result.map((item) => item._id);
+    return result.map((item) => item.categories);
   }
+
 }

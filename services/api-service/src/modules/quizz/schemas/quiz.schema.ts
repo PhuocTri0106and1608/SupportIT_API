@@ -7,7 +7,7 @@ export type QuizDocument = HydratedDocument<Quiz>;
 @Schema({ timestamps: true, versionKey: false })
 export class Quiz extends BaseSchema {
   @Prop() title: string;
-  @Prop() category: string;
+  @Prop() categories: string[];
   @Prop() sourceUrl: string;
   @Prop([
     {
@@ -27,4 +27,4 @@ export class Quiz extends BaseSchema {
 }
 
 export const QuizSchema = SchemaFactory.createForClass(Quiz);
-QuizSchema.index({ title: 1, category: 1 });
+QuizSchema.index({ categories: 1 });

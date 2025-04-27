@@ -2,13 +2,10 @@ import { AdminActionEnum, SubjectEnum } from "@common/enums";
 
 export const SUBJECTS = [
     SubjectEnum.ALL,
-    SubjectEnum.USERS,
+    SubjectEnum.CANDIDATES,
     SubjectEnum.ADMINS,
-    SubjectEnum.USER_REFS,
-    SubjectEnum.QUESTS,
-    SubjectEnum.ACHIEVEMENT,
     SubjectEnum.IMAGE,
-    SubjectEnum.PUBLISHERS
+    SubjectEnum.RECRUITERS
 ];
 
 export const ACTIONS = [AdminActionEnum.MANAGE, AdminActionEnum.CREATE, AdminActionEnum.READ, AdminActionEnum.UPDATE, AdminActionEnum.DELETE];

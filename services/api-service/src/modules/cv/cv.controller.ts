@@ -15,7 +15,7 @@ import { LoginRoleEnum } from "@common/enums";
 @ApiTags("CVs")
 @ApiBearerAuth("access-token")
 @UseGuards(AuthGuard, AnyRoleGuard)
-@AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER, LoginRoleEnum.ADMIN)
+@AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
 export class CVController {
   constructor(
     private readonly cvService: CVService,
