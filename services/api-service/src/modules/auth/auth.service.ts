@@ -52,13 +52,6 @@ export class AuthService {
                 }
 
                 const user = await this.userService.createOrUpdateUser({ ...getWeb2LoginVerify.data, role });
-                // Kiểm tra quyền đăng nhập với role RECRUITER
-                if (role === LoginRoleEnum.RECRUITER && !user.canBeRecruiter) {
-                    return {
-                        code: CodeResponseEnum.ERROR,
-                        message: "User is not allowed to login as RECRUITER"
-                    };
-                }
                 const roles = user.roles || [];
                 if (!roles.includes(role)) {
                     roles.push(role);
@@ -69,7 +62,9 @@ export class AuthService {
                     email: data.email,
                     id: user._id.toString(),
                     sessionId,
-                    roles
+                    loginRole: role,
+                    roles,
+                    canBeRecruiter: user.canBeRecruiter,
                 });
                 console.log("Access token", accessToken);
                 return {

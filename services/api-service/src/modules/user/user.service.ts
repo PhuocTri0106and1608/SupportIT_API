@@ -79,52 +79,68 @@ export class UserService {
     }): Promise<UserDocument> {
         const { email, name, avatar, googleAccessToken, googleRefreshToken, role } = request;
 
-        try {
-            const existingUser = await this.userRepository.findOne({ email: email }, false);
+        if (!email) {
+            throw new HttpException("Email is required", HttpStatus.BAD_REQUEST);
+        }
 
+        try {
+            const existingUser = await this.userRepository.findOne({ email }, false);
+
+            // Nếu user chưa tồn tại, tạo mới
             if (!existingUser) {
+                const defaultRoles = role === LoginRoleEnum.RECRUITER
+                    ? [LoginRoleEnum.CANDIDATE]
+                    : [role];
+
                 const newUser = {
-                    email: email,
+                    email,
                     loginTime: 1,
                     lastLoginDate: new Date(),
                     name: name || email.split("@")[0],
                     avatar,
                     googleAccessToken,
                     googleRefreshToken,
-                    roles: [role],
-                    canBeRecruiter: false
+                    roles: defaultRoles,
+                    canBeRecruiter: false, // Luôn mặc định là false khi tạo mới
                 };
 
                 const user = await this.userRepository.create(newUser) as UserDocument;
-                switch (role) {
-                    case LoginRoleEnum.CANDIDATE:
-                        await this.candidateRepository.create({ userId: user._id.toString() });
-                        break;
-                    default:
-                        break;
+
+                // Nếu là candidate thì tạo candidate profile
+                if (role === LoginRoleEnum.CANDIDATE) {
+                    await this.candidateRepository.create({ userId: user._id.toString() });
                 }
 
                 if (email) {
                     this.userEmailBloomFilter.add(email.toLowerCase());
                 }
+
                 return user;
             }
-            const currentRoles = existingUser.roles || [];
-            if (role && !currentRoles.includes(role)) {
-                currentRoles.push(role);
+
+            // Nếu user đã tồn tại, cập nhật thông tin
+            const updatedRoles = [...(existingUser.roles || [])];
+
+            if (role && !updatedRoles.includes(role)) {
+                const isRecruiterRole = role === LoginRoleEnum.RECRUITER;
+                const canAssignRecruiterRole = !isRecruiterRole || existingUser.canBeRecruiter;
+
+                if (canAssignRecruiterRole) {
+                    updatedRoles.push(role);
+                }
             }
 
             const updatedUser = await this.userRepository.findOneAndUpdate(
-                { email: email },
+                { email },
                 {
                     $inc: { loginTime: 1 },
                     $set: {
                         lastLoginDate: new Date(),
-                        roles: currentRoles,
+                        roles: updatedRoles,
                         avatar: avatar || existingUser.avatar,
                         name: name || existingUser.name,
                         googleAccessToken: googleAccessToken || existingUser.googleAccessToken,
-                        googleRefreshToken: googleRefreshToken || existingUser.googleRefreshToken
+                        googleRefreshToken: googleRefreshToken || existingUser.googleRefreshToken,
                     }
                 },
                 { new: true, upsert: false },
@@ -134,10 +150,11 @@ export class UserService {
             return updatedUser;
         } catch (error) {
             throw new HttpException("createUser error", HttpStatus.INTERNAL_SERVER_ERROR, {
-                cause: error
+                cause: error,
             });
         }
     }
+
 
     async getProfile(request: IAuthPayload) {
         const { id } = request;

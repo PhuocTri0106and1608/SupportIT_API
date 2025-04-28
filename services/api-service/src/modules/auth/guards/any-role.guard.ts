@@ -25,6 +25,10 @@ export class AnyRoleGuard {
       throw new UnauthorizedException("User not found");
     }
 
+    if (requiredRoles.includes(LoginRoleEnum.RECRUITER) && user.loginRole === LoginRoleEnum.RECRUITER && !user.canBeRecruiter) {
+      throw new UnauthorizedException("User is not a recruiter");
+    }
+
     // Kiểm tra xem user có ít nhất một role trong requiredRoles không
     const hasRequiredRole = user.roles?.some(role => requiredRoles.includes(role));
 
