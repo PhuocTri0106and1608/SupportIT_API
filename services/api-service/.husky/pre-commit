@@ -1,1 +1,1 @@
-cd ./services/api-service && npm run lint-staged
+cd ./services/api-service
