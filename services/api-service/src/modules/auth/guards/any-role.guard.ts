@@ -26,7 +26,7 @@ export class AnyRoleGuard {
     }
 
     if (requiredRoles.includes(LoginRoleEnum.RECRUITER) && user.loginRole === LoginRoleEnum.RECRUITER && !user.canBeRecruiter) {
-      throw new UnauthorizedException("User is not a recruiter");
+      throw new UnauthorizedException("User are not allowed to be a recruiter");
     }
 
     // Kiểm tra xem user có ít nhất một role trong requiredRoles không

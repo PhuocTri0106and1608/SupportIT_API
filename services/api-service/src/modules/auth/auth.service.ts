@@ -10,8 +10,9 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Response } from "express";
 import { v4 as uuidv4 } from "uuid";
-import { LoginRequestDto, UserExternalProfileDto } from "./dtos";
+import { LoginRequestDto, SignUpRequestDto, UserExternalProfileDto } from "./dtos";
 import { IAuthPayload } from "./interfaces";
+import { RecruiterRepository } from '../recruiter/repositories/recruiter.repository';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
         private readonly jwtService: JwtService,
         private readonly web2AuthService: Web2AuthService,
         private readonly userService: UserService,
+        private readonly recruiterRepository: RecruiterRepository,
         private readonly redisService: RedisService
     ) { }
 
@@ -57,7 +59,14 @@ export class AuthService {
                     roles.push(role);
                 }
 
-                const sessionId = this.generateSessionId(user._id.toString(), roles);
+                if (!user.canBeRecruiter && role === LoginRoleEnum.RECRUITER) {
+                    return {
+                        code: CodeResponseEnum.ERROR,
+                        message: "User are not allowed to be a recruiter"
+                    }
+                }
+
+                const sessionId = this.generateSessionId(user._id.toString(), role);
                 const accessToken = this.generateAccessToken({
                     email: data.email,
                     id: user._id.toString(),
@@ -82,6 +91,25 @@ export class AuthService {
             }
         }
     }
+
+    async signUpRecruiter(dto: SignUpRequestDto): Promise<ResponseType> {
+        const { email } = dto;
+    
+        const user = await this.userService.createOrUpdateUser({
+            email,
+            role: LoginRoleEnum.RECRUITER
+        });
+
+        const recruiter = await this.recruiterRepository.create({
+            ...dto,
+            userId: user._id.toString()
+        });
+        return {
+          code: CodeResponseEnum.SUCCESS,
+          data: recruiter,
+        };
+      }
+    
 
     async handleGoogleCallback(user: UserExternalProfileDto, res: Response, role: LoginRoleEnum) {
         try {
@@ -119,12 +147,12 @@ export class AuthService {
         }
     }
 
-    private generateSessionId(userId: string, roles: LoginRoleEnum[]) {
+    private generateSessionId(userId: string, role: LoginRoleEnum) {
         const sessionId = uuidv4();
         const now = Date.now();
         const ttl = 60 * 60; // 1 hours in seconds
 
-        const userSessionsKey = `user:${userId}:sessions`;
+        const userSessionsKey = `user:${userId}:role:${role}:sessions`;
 
         this.saveSessionToRedis(userSessionsKey, sessionId, now, ttl).catch((error) => {
             logger.error(`Error save session to Redis: ${error.message}`, {
@@ -147,14 +175,14 @@ export class AuthService {
         await pipeline.exec();
     }
 
-    protected async validateSession(userId: string, sessionId: string, roles: LoginRoleEnum[]): Promise<boolean> {
-        const userSessionsKey = `user:${userId}:sessions`;
+    protected async validateSession(userId: string, sessionId: string, role: LoginRoleEnum): Promise<boolean> {
+        const userSessionsKey = `user:${userId}:role:${role}:sessions`;
         const score = await this.redisService.zScore(userSessionsKey, sessionId);
         return score !== null;
     }
 
-    async logoutSession(userId: string, sessionId: string): Promise<ResponseType> {
-        const userSessionsKey = `user:${userId}:sessions`;
+    async logoutSession(userId: string, sessionId: string, role: LoginRoleEnum): Promise<ResponseType> {
+        const userSessionsKey = `user:${userId}:role:${role}:sessions`;
 
         await this.redisService.zRem(userSessionsKey, sessionId);
 

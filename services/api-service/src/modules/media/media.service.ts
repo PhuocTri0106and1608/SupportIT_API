@@ -4,7 +4,8 @@ import { CodeResponseEnum } from '@common/enums';
 import { v2 as cloudinary } from 'cloudinary';
 import { env } from '@environments';
 import { slugify } from '@utils';
-import toStream = require('buffer-to-stream');
+import toStream from 'buffer-to-stream';
+import e from 'express';
 
 @Injectable()
 export class MediaService {
@@ -27,7 +28,7 @@ export class MediaService {
         },
     ): Promise<ResponseType> {
         const parts = fileName.split('.');
-        const extension = parts.length > 1 ? parts.pop() : '';
+        // const extension = parts.length > 1 ? parts.pop() : '';
         const filename = slugify(parts.join('.'));
         const public_id = `${path}/${Date.now().toString()}-${filename}`;
 
@@ -73,6 +74,7 @@ export class MediaService {
         } catch (error) {
             return {
                 code: CodeResponseEnum.ERROR,
+                message: error?.message,
             };
         }
     }

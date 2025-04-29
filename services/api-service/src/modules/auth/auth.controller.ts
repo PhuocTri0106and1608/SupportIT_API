@@ -5,7 +5,7 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Res, UseGuard
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { Response } from "express";
 import { AuthService } from "./auth.service";
-import { LoginRequestDto, UserExternalProfileDto } from "./dtos";
+import { LoginRequestDto, SignUpRequestDto, UserExternalProfileDto } from "./dtos";
 import { IAuthPayload } from "./interfaces";
 import { AuthGuard } from "@common/guards";
 import { LoginRoleEnum } from "@common/enums";
@@ -25,13 +25,20 @@ export class AuthController {
         return this.authService.login(loginRequestDto, role);
     }
 
-    @Post("logout")
+    @Post("signUpRecruiter")
+    @ApiOkResponse({ type: ResponseType })
+    @HttpCode(HttpStatus.OK)
+    async signUpRecruiter(@Body() signUpRequestDto: SignUpRequestDto) {
+        return this.authService.signUpRecruiter(signUpRequestDto);
+    }
+
+    @Post("logout/:role")
     @UseGuards(AuthGuard, AnyRoleGuard)
     @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
     @ApiOkResponse({ type: ResponseType })
     @HttpCode(HttpStatus.OK)
-    public async logout(@CurrentUser() req: IAuthPayload) {
-        return this.authService.logoutSession(req.id, req.sessionId);
+    public async logout(@CurrentUser() req: IAuthPayload, @Param("role") role: LoginRoleEnum) {
+        return this.authService.logoutSession(req.id, req.sessionId, role);
     }
 
     @Get("google/callback/candidate")

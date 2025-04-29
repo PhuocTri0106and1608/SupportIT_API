@@ -26,13 +26,13 @@ export class GoogleOAuth2RecruiterStrategy extends PassportStrategy(Strategy, "g
         });
     }
 
-    async generateState(preAuthData: {  }): Promise<string> {
+    async generateState(preAuthData: object): Promise<string> {
         const state = uuidv4();
         await this.redisService.set(`:${GoogleModule.name}:${OAuthProvidersEnum.GOOGLE}:${state}`, preAuthData, { ttl: 10 * 60 }); // Expires in 10 minutes
         return state;
     }
 
-    async getAuthorizeUrl(preAuthData: { }): Promise<string> {
+    async getAuthorizeUrl(preAuthData: object): Promise<string> {
         const state = await this.generateState(preAuthData);
         const params = new URLSearchParams({
             response_type: "code",
@@ -58,6 +58,7 @@ export class GoogleOAuth2RecruiterStrategy extends PassportStrategy(Strategy, "g
                 accessToken,
                 refreshToken
             };
+            console.log(req);
 
             done(null, user);
         } catch (error) {

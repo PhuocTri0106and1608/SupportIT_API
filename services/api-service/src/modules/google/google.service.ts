@@ -9,7 +9,7 @@ export class GoogleService {
         private readonly googleOAuth2RecruiterStrategy: GoogleOAuth2RecruiterStrategy
     ) { }
 
-    async getOauth2AuthorUrl(preAuthData: {}, role: LoginRoleEnum): Promise<string> {
+    async getOauth2AuthorUrl(preAuthData: object, role: LoginRoleEnum): Promise<string> {
         switch (role) {
             case LoginRoleEnum.CANDIDATE:
                 return this.googleOAuth2CandidateStrategy.getAuthorizeUrl(preAuthData);
