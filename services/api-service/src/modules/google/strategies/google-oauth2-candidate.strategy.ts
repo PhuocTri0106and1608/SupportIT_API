@@ -58,7 +58,6 @@ export class GoogleOAuth2CandidateStrategy extends PassportStrategy(Strategy, "g
                 accessToken,
                 refreshToken
             };
-            console.log(req);
             done(null, user);
         } catch (error) {
             throw new UnauthorizedException(error.message);
