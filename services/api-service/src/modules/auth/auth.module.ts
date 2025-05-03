@@ -6,6 +6,7 @@ import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
+import { RecruiterModule } from "@modules/recruiter/recruiter.module";
 
 @Module({
     imports: [
@@ -15,7 +16,8 @@ import { AuthService } from "./auth.service";
         RedisModule,
         UserModule,
         MailerModule,
-        Web2AuthModule
+        Web2AuthModule,
+        RecruiterModule
     ],
     controllers: [AuthController],
     providers: [AuthService],

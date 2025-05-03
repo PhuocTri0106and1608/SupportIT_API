@@ -3,11 +3,11 @@ import { FilterQuery, Model, UpdateQuery } from "mongoose";
 export class BaseMongoRepository<T> {
     constructor(private readonly model: Model<T>) {}
 
-    find(filter: FilterQuery<T> = {}, isLean: boolean = true) {
+    find(filter: FilterQuery<T> = {}, isLean: boolean = true): Promise<any> {
         return isLean ? this.model.find(filter).lean().exec() : this.model.find(filter).exec();
     }
 
-    findOne(filter: FilterQuery<T>, isLean: boolean = true, excludeFields?: string | string[]) {
+    findOne(filter: FilterQuery<T>, isLean: boolean = true, excludeFields?: string | string[]): Promise<any> {
         const query = this.model.findOne(filter);
 
         if (excludeFields) {
@@ -17,7 +17,7 @@ export class BaseMongoRepository<T> {
         return isLean ? query.lean().exec() : query.exec();
     }
 
-    findById(id: string, isLean: boolean = true) {
+    findById(id: string, isLean: boolean = true): Promise<any> {
         return isLean ? this.model.findById(id).lean().exec() : this.model.findById(id).exec();
     }
 
@@ -26,7 +26,7 @@ export class BaseMongoRepository<T> {
         return newDocument.save();
     }
 
-    findOneAndUpdate(filter: FilterQuery<T>, data: UpdateQuery<T>, option = { new: true, upsert: false }, isLean: boolean = true) {
+    findOneAndUpdate(filter: FilterQuery<T>, data: UpdateQuery<T>, option = { new: true, upsert: false }, isLean: boolean = true): Promise<any> {
         return isLean ? this.model.findOneAndUpdate(filter, data, option).lean().exec() : this.model.findOneAndUpdate(filter, data, option).exec();
     }
 
@@ -42,7 +42,7 @@ export class BaseMongoRepository<T> {
         return this.model.countDocuments(filter).exec();
     }
 
-    findWithPagination(filter: FilterQuery<T> = {}, skip: number = 0, limit: number = 10, isLean: boolean = true) {
+    findWithPagination(filter: FilterQuery<T> = {}, skip: number = 0, limit: number = 10, isLean: boolean = true): Promise<any> {
         const query = this.model.find(filter).skip(skip).limit(limit);
         return isLean ? query.lean().exec() : query.exec();
     }

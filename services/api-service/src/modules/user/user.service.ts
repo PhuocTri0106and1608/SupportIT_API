@@ -88,9 +88,6 @@ export class UserService {
 
             // Nếu user chưa tồn tại, tạo mới
             if (!existingUser) {
-                const defaultRoles = role === LoginRoleEnum.RECRUITER
-                    ? [LoginRoleEnum.CANDIDATE]
-                    : [role];
 
                 const newUser = {
                     email,
@@ -100,7 +97,7 @@ export class UserService {
                     avatar,
                     googleAccessToken,
                     googleRefreshToken,
-                    roles: defaultRoles,
+                    roles: [role],
                     canBeRecruiter: false, // Luôn mặc định là false khi tạo mới
                 };
 
@@ -122,12 +119,7 @@ export class UserService {
             const updatedRoles = [...(existingUser.roles || [])];
 
             if (role && !updatedRoles.includes(role)) {
-                const isRecruiterRole = role === LoginRoleEnum.RECRUITER;
-                const canAssignRecruiterRole = !isRecruiterRole || existingUser.canBeRecruiter;
-
-                if (canAssignRecruiterRole) {
-                    updatedRoles.push(role);
-                }
+                updatedRoles.push(role);
             }
 
             const updatedUser = await this.userRepository.findOneAndUpdate(

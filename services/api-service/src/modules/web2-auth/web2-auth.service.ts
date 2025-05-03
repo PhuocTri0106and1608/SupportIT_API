@@ -120,7 +120,7 @@ export class Web2AuthService {
 
         this.redisService.del(`mail:${normalizedEmail}:otp`).catch((err) => logger.error(`Failed to delete OTP: ${err.message}`));
 
-        const mayExistResult = await this.userService.getUserEmailBloomFilter(normalizedEmail);
+        // const mayExistResult = await this.userService.getUserEmailBloomFilter(normalizedEmail);
 
         return {
             code: CodeResponseEnum.SUCCESS,

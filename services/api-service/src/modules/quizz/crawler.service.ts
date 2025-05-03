@@ -10,8 +10,8 @@ import { shuffleArray } from '@utils';
 
 @Injectable()
 export class CrawlerService {
-  private readonly logger = new Logger(CrawlerService.name);
-  private readonly baseUrl = 'https://www.geeksforgeeks.org';
+  // private readonly logger = new Logger(CrawlerService.name);
+  // private readonly baseUrl = 'https://www.geeksforgeeks.org';
 
   constructor(
     private readonly quizRepository: QuizRepository,
@@ -123,7 +123,7 @@ export class CrawlerService {
         if (!data.next) break;
         page++;
       } catch (err) {
-        console.warn(`⚠️ Failed to fetch page ${page} for quiz: ${quizTitle}: ${slug}`);
+        console.warn(`⚠️ Failed to fetch page ${page} for quiz: ${quizTitle}: ${slug}: ${err}`);
         break;
       }
     }
