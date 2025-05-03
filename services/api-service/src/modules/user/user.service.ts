@@ -10,6 +10,7 @@ import { CandidateRepository } from "@modules/candidate/repositories";
 import { ResponseType } from "@common/dtos";
 import { TokenPayloadAdminDto } from '../admin/dtos/admin-request.dto';
 import { AdminLogService } from "@modules/admin/services";
+import { RecruiterRepository } from '../recruiter/repositories/recruiter.repository';
 @Injectable()
 export class UserService {
     private userBloomFilter: BloomFilter;
@@ -18,6 +19,7 @@ export class UserService {
     constructor(
         private readonly userRepository: UserRepository,
         private readonly candidateRepository: CandidateRepository,
+        private readonly recruiterRepository: RecruiterRepository,
         private readonly adminLogService: AdminLogService
     ) {
         this.initBloomFilter();
@@ -148,13 +150,15 @@ export class UserService {
     }
 
 
-    async getProfile(request: IAuthPayload) {
+    async getProfile(request: IAuthPayload): Promise<ResponseType> {
         const { id, loginRole } = request;
         const user = await this.userRepository.findOne({ _id: id }, true, ["-googleAccessToken", "-googleRefreshToken"]);
+        const extraInfo = loginRole === LoginRoleEnum.CANDIDATE ? await this.candidateRepository.findOne({ userId: id }) : await this.recruiterRepository.findOne({ userId: id });
         return {
             code: CodeResponseEnum.SUCCESS,
             data: {
-                user
+            ...user,
+                extraInfo
             }
         };
     }

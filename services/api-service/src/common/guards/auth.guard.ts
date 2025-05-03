@@ -4,6 +4,7 @@ import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable } 
 import { Reflector } from "@nestjs/core";
 import { JwtService } from "@nestjs/jwt";
 import { IS_PUBLIC_KEY } from "../decorators";
+import { IAuthPayload } from "@modules/auth/interfaces";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -24,7 +25,7 @@ export class AuthGuard implements CanActivate {
         try {
             const { authToken } = this.extractCredentialFromHeader(request);
 
-            const decoded = this.jwtService.verify(authToken, {
+            const decoded: IAuthPayload = this.jwtService.verify(authToken, {
                 secret: env.jwt.access.SECRET
             });
 
@@ -32,7 +33,7 @@ export class AuthGuard implements CanActivate {
                 return false;
             }
 
-            const userSessionsKey = `user:${decoded.id}:sessions`;
+            const userSessionsKey = `user:${decoded.id}:role:${decoded.loginRole}:sessions`;
             const sessionExists = await this.redisService.zScore(userSessionsKey, decoded.sessionId);
 
             if (sessionExists === null) {
