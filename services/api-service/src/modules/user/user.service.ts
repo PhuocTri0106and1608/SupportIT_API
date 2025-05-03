@@ -157,7 +157,7 @@ export class UserService {
 
 
     async getProfile(request: IAuthPayload) {
-        const { id } = request;
+        const { id, loginRole } = request;
         const user = await this.userRepository.findOne({ _id: id }, true, ["-googleAccessToken", "-googleRefreshToken"]);
         return {
             code: CodeResponseEnum.SUCCESS,
