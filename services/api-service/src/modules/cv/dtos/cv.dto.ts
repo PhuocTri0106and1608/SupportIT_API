@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString,  } from 'class-validator';
+import { IsArray, IsIn, IsObject, IsOptional, IsString, ValidateNested,  } from 'class-validator';
+import { BaseInformation } from '../schemas';
+import { Type } from 'class-transformer';
 
 export class CVDto {
   @ApiProperty()
@@ -10,3 +12,16 @@ export class CVDto {
   @IsString()
   jobDescription: string;
 }
+
+export class CVUploadDto {
+  @IsString() fileUrl: string;
+  @IsOptional() @IsString() fileName?: string;
+}
+
+
+export class JDCreateDto {
+  @IsString() fileUrl: string;
+  @IsOptional() @IsString() fileName?: string;
+  @IsOptional() @IsIn(["private", "public"]) visibility?: "private" | "public";
+}
+

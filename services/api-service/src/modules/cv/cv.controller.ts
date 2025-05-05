@@ -1,9 +1,8 @@
 import { AnyRole, CurrentUser } from "@common/decorators";
 import { AuthGuard } from "@common/guards";
-import { Controller, Get, UseGuards, Post, Body, Delete, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator } from "@nestjs/common";
+import { Controller, Get, UseGuards, Post, Body, Delete, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Param } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiBody, ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { CVService } from "./cv.service";
-import { CVDto } from "./dtos";
 import { ResponseType } from "@common/dtos";
 import { DeleteFileDto, UploadFileDto } from "@modules/media/dtos";
 import { MediaService } from "@modules/media/media.service";
@@ -22,9 +21,9 @@ export class CVController {
     private readonly mediaService: MediaService
   ) { }
 
-  @Post("reviewCV")
-  async reviewCV(@CurrentUser() user, @Body() request: CVDto): Promise<ResponseType> {
-    return this.cvService.saveCV({ cv: request, userId: user.id });
+  @Post("reviewCV/:cvId/:jdId")
+  async reviewCV(@CurrentUser() user, @Param() cvId: string, @Param() jdId: string): Promise<ResponseType> {
+    return this.cvService.reviewCV({ userId: user.id, cvId, jdId });
   }
 
   @ApiConsumes('multipart/form-data')

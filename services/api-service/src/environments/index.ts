@@ -46,6 +46,8 @@ const {
     DIGITAL_OCEAN_ACCESS_KEY,
     CDN_URL,
     REVIEW_CV_URL,
+    EXTRACT_CV_URL,
+    EXTRACT_JD_URL,
     EVALUATE_INTERVIEW_URL,
     CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY,
@@ -112,8 +114,8 @@ if (!DIGITAL_OCEAN_PUBLIC_BUCKET || !DIGITAL_OCEAN_REGION || !DIGITAL_OCEAN_ENDP
     );
 }
 
-if (!REVIEW_CV_URL || !EVALUATE_INTERVIEW_URL) {
-    throw new Error("REVIEW_CV_URL || EVALUATE_INTERVIEW_URL env is not define");
+if (!REVIEW_CV_URL || !EXTRACT_CV_URL || !EXTRACT_JD_URL || !EVALUATE_INTERVIEW_URL) {
+    throw new Error("REVIEW_CV_URL || EXTRACT_CV_URL || EXTRACT_JD_URL || EVALUATE_INTERVIEW_URL env is not define");
 }
 
 export const env = {
@@ -223,6 +225,8 @@ export const env = {
 
     flask: {
         REVIEW_CV_URL,
+        EXTRACT_CV_URL,
+        EXTRACT_JD_URL,
         EVALUATE_INTERVIEW_URL
     }
 } as const;
