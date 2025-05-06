@@ -42,8 +42,20 @@ export class BaseMongoRepository<T> {
         return this.model.countDocuments(filter).exec();
     }
 
-    findWithPagination(filter: FilterQuery<T> = {}, skip: number = 0, limit: number = 10, isLean: boolean = true): Promise<any> {
-        const query = this.model.find(filter).skip(skip).limit(limit);
+    findWithPagination(
+        filter: FilterQuery<T> = {},
+        skip: number = 0,
+        limit: number = 10,
+        isLean: boolean = true,
+        select?: Record<string, 0 | 1> | string  // thêm select tuỳ chọn
+    ): Promise<any> {
+        let query = this.model.find(filter).skip(skip).limit(limit);
+
+        if (select) {
+            query = query.select(select);
+        }
+
         return isLean ? query.lean().exec() : query.exec();
     }
+
 }

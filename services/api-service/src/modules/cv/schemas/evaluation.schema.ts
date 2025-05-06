@@ -2,7 +2,7 @@ import { BaseSchema } from "@common/schemas";
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument } from "mongoose";
 import { Type } from "class-transformer";
-import { IsArray, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
+import { IsArray, IsNumber, IsString } from "class-validator";
 
 export type EvaluationDocument = HydratedDocument<Evaluation>;
 
