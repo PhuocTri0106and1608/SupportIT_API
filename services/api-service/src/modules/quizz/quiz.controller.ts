@@ -34,8 +34,6 @@ export class QuizController {
   }
 
   @Get("getListQuizzes")
-  @UseGuards(AuthGuard, AnyRoleGuard)
-  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   @ApiOkResponseCustom(ResponseType)
   async getListQuizzes(@Query() query: FilterQuizzesRequestDto): Promise<ResponseType> {
     return await this.quizService.getListQuizzes(query);
