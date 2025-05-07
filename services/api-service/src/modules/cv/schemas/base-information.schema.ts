@@ -1,10 +1,7 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { HydratedDocument } from "mongoose";
+import { Prop } from "@nestjs/mongoose";
 import { IsArray, IsOptional, IsString } from "class-validator";
 
-export type BaseInformationDocument = HydratedDocument<BaseInformation>;
 
-@Schema({ _id: false, versionKey: false })
 export class BaseInformation {
   @IsArray()
   @IsString({ each: true })
@@ -45,5 +42,3 @@ export class BaseInformation {
   @Prop([String])
   languages?: string[];
 }
-
-export const BaseInformationSchema = SchemaFactory.createForClass(BaseInformation);

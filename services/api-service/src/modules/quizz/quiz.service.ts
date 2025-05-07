@@ -94,8 +94,13 @@ export class QuizService {
         };
       }
 
+      const selectFields: Record<string, 0 | 1> = {
+        'questions.correctAnswer': 0,
+        'questions.explanation': 0,
+      };
+
       const [quizzes, total] = await Promise.all([
-        this.quizRepository.findWithPagination(filter, skip, limit),
+        this.quizRepository.findWithPagination(filter, skip, limit, true, selectFields),
         this.quizRepository.countDocuments(filter),
       ]);
 
