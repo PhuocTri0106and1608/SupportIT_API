@@ -1,7 +1,7 @@
 import { FilterQuery, Model, UpdateQuery } from "mongoose";
 
 export class BaseMongoRepository<T> {
-    constructor(private readonly model: Model<T>) {}
+    constructor(private readonly model: Model<T>) { }
 
     find(filter: FilterQuery<T> = {}, isLean: boolean = true): Promise<any> {
         return isLean ? this.model.find(filter).lean().exec() : this.model.find(filter).exec();
@@ -17,8 +17,10 @@ export class BaseMongoRepository<T> {
         return isLean ? query.lean().exec() : query.exec();
     }
 
-    findById(id: string, isLean: boolean = true): Promise<any> {
-        return isLean ? this.model.findById(id).lean().exec() : this.model.findById(id).exec();
+    findById(id: string, isLean: boolean = true, select?: Record<string, 0 | 1> | string): Promise<any> {
+        const q = this.model.findById(id);
+        if (select) q.select(select);
+        return isLean ? q.lean().exec() : q.exec();
     }
 
     create(data) {

@@ -5,9 +5,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { CrawlerService } from './crawler.service';
 import { QuizController } from './quiz.controller';
 import { Quiz, QuizSchema } from './schemas/quiz.schema';
-import { QuizRepository } from './repositories';
+import { QuizRepository, QuizSubmissionRepository } from './repositories';
 import { QuizService } from './quiz.service';
 import { RedisModule } from '@modules/redis';
+import { QuizSubmission, QuizSubmissionSchema } from './schemas';
 
 @Module({
   imports: [
@@ -15,9 +16,10 @@ import { RedisModule } from '@modules/redis';
     HttpModule,
     RedisModule,
     MongooseModule.forFeature([{ name: Quiz.name, schema: QuizSchema }]),
+    MongooseModule.forFeature([{ name: QuizSubmission.name, schema: QuizSubmissionSchema }])
   ],
-  providers: [CrawlerService, QuizService, QuizRepository],
-  exports: [CrawlerService, QuizService, QuizRepository],
+  providers: [CrawlerService, QuizService, QuizRepository, QuizSubmissionRepository],
+  exports: [CrawlerService, QuizService, QuizRepository, QuizSubmissionRepository],
   controllers: [QuizController],
 })
 export class QuizModule { }
