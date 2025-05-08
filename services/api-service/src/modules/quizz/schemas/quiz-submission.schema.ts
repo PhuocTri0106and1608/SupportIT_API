@@ -13,6 +13,7 @@ export class QuizSubmission extends BaseSchema {
   candidateId: string;
 
   @Prop([{
+    _id: false,
     qIndex: Number,
     chosenOption: Number,
     isCorrect: Boolean,
