@@ -69,6 +69,11 @@ export class FilterJDsRequestDto extends PageOptionsDto {
   @IsOptional()
   title?: string;
 
+  @ApiPropertyOptional({ example: 'React' })
+  @IsString()
+  @IsOptional()
+  skill?: string;
+
   @ApiPropertyOptional({ example: 'Google' })
   @IsString()
   @IsOptional()

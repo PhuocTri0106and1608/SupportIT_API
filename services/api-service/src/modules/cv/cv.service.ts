@@ -272,7 +272,7 @@ export class CVService {
     }
   }
   async getListJDs(query: FilterJDsRequestDto): Promise<ResponseType> {
-    const { page = 1, limit = 10, creatorUserId, title, companyName, location, visibility } = query;
+    const { page = 1, limit = 10, creatorUserId, title, companyName, location, visibility, skill } = query;
     const skip = (page - 1) * limit;
 
     try {
@@ -282,6 +282,7 @@ export class CVService {
       if (companyName) filter.companyName = { $regex: companyName, $options: "i" };
       if (location) filter.location = { $regex: location, $options: "i" };
       if (visibility) filter.visibility = visibility;
+      if (skill) filter['requirements.skills'] = { $in: [skill] };
 
       const cacheKey = `jds:list:page=${page}:limit=${limit}:${JSON.stringify(query)}`;
 
