@@ -3,10 +3,11 @@ import { IsNotEmpty, IsString } from "class-validator";
 
 export class UploadFileDto {
     @ApiProperty({
-        type: "string",
-        format: "binary"
-    })
-    file: any;
+        type: 'string',
+        format: 'binary',
+      })
+      @IsNotEmpty()
+      file: any;
 }
 
 export class DeleteFileDto {
