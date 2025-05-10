@@ -107,9 +107,9 @@ export class CVController {
     type: UploadFileDto,
   })
   @UseInterceptors(FileInterceptor('file'))
-  @Post('uploadCV')
+  @Post('uploadFile')
   @ApiOkResponse({
-    description: 'Upload CV file to Cloudinary',
+    description: 'Upload file to Cloudinary',
     type: ResponseType<{ imageUrl: string; publicId: string }>,
   })
   async uploadFile(
@@ -118,7 +118,7 @@ export class CVController {
         validators: [
           new MaxFileSizeValidator({ maxSize: 1_000_000 }), // 1MB
           new FileTypeValidator({
-            fileType: /application\/(pdf|msword|vnd.openxmlformats-officedocument.wordprocessingml.document)/,
+            fileType: /application\/(pdf|msword|vnd.openxmlformats-officedocument.wordprocessingml.document)|application\/octet-stream/,
           }),
         ],
       }),
