@@ -24,6 +24,9 @@ export class Quiz extends BaseSchema {
     correctAnswer: Number;
     explanation?: string;
   }[];
+
+  @Prop({ default: 0 })
+  duration: number;
 }
 
 export const QuizSchema = SchemaFactory.createForClass(Quiz);

@@ -1,4 +1,4 @@
-import { IsArray, ValidateNested, IsInt, Min } from 'class-validator';
+import { IsArray, ValidateNested, IsInt, Min, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -24,4 +24,9 @@ export class SubmitQuizDto {
   @ValidateNested({ each: true })
   @Type(() => AnswerDto)
   answers: AnswerDto[];
+
+  @ApiProperty({ description: 'Time when candidate started the quiz', example: '2025-05-10T08:00:00.000Z' })
+  @IsString()
+  startTime: string;
 }
+

@@ -21,6 +21,14 @@ export class QuizSubmission extends BaseSchema {
   answers: { qIndex: number; chosenOption: number; isCorrect: boolean }[];
 
   @Prop() score: number;
+
+  @Prop() duration: number;
+
+  @Prop() actualDuration: number;
+
+  @Prop() startTime: Date;
+
+  @Prop() endTime: Date;
 }
 
 export const QuizSubmissionSchema = SchemaFactory.createForClass(QuizSubmission);

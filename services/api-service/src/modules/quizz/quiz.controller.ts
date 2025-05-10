@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { CrawlerService } from './crawler.service';
 import { QuizService } from './quiz.service';
 import { AuthGuard } from '@common/guards';
@@ -26,6 +26,11 @@ export class QuizController {
     await this.crawlerService.crawlAllCategories();
     return { message: '✅ Crawling completed manually' };
   }
+
+  // @Patch("update-duration")
+  // async updateQuizDurations() {
+  //   return this.quizService.updateQuizDurations();
+  // }
 
   @Post("submit/:quizId")
   @UseGuards(AuthGuard, AnyRoleGuard)

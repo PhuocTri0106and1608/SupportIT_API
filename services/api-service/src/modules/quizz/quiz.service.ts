@@ -19,20 +19,49 @@ export class QuizService {
     candidateId: string,
     body: SubmitQuizDto,
   ): Promise<ResponseType> {
-    const { answers } = body;
+    const { answers, startTime } = body;
+
     try {
       const quiz = await this.quizRepository.findById(quizId);
+      if (!quiz) {
+        throw new HttpException("Quiz not found", HttpStatus.NOT_FOUND);
+      }
+
+      const now = new Date();
+      const start = new Date(startTime);
+      const actualDuration = Math.floor((now.getTime() - start.getTime()) / 1000);
+
       const feedback = answers.map(a => ({
         ...a,
         isCorrect: a.chosenOption === quiz.questions[a.qIndex].correctAnswer,
       }));
+
       const correctCount = feedback.filter(f => f.isCorrect).length;
       const score = Math.round((correctCount / quiz.questions.length) * 100);
 
-      await this.subRepository.create({ quizId, candidateId, answers: feedback, score });
+      const submission = {
+        quizId,
+        candidateId,
+        answers: feedback,
+        score,
+        duration: quiz.duration,
+        startTime: start,
+        endTime: now,
+        actualDuration,
+      };
+
+      await this.subRepository.create(submission);
+
       return {
         code: CodeResponseEnum.SUCCESS,
-        data: { score, total: quiz.questions.length, correctCount, feedback }
+        data: {
+          score,
+          total: quiz.questions.length,
+          correctCount,
+          duration: submission.duration,
+          actualDuration,
+          feedback,
+        },
       };
     } catch (error) {
       throw new HttpException("submit error", HttpStatus.INTERNAL_SERVER_ERROR, {
@@ -40,6 +69,7 @@ export class QuizService {
       });
     }
   }
+  
   async getListSubmissions(query: FilterSubmissionsRequestDto): Promise<ResponseType> {
     const { page = 1, limit = 10, quizId, candidateId } = query;
     const skip = (page - 1) * limit;
@@ -216,5 +246,32 @@ export class QuizService {
       });
     }
   }
+  // async updateQuizDurations(): Promise<ResponseType> {
+  //   try {
+  //     const quizzes = await this.quizRepository.find();
 
+  //     const updatedQuizzes = await Promise.all(
+  //       quizzes.map(async (quiz) => {
+  //         const numQuestions = quiz.questions?.length || 0;
+  //         const duration = numQuestions * 30; // mỗi câu 30 giây
+
+  //         return this.quizRepository.findOneAndUpdate(
+  //           { _id: quiz._id },
+  //           { $set: { duration } }
+  //         );
+  //       })
+  //     );
+
+  //     return {
+  //       code: CodeResponseEnum.SUCCESS,
+  //       data: {
+  //         updated: updatedQuizzes.length,
+  //       },
+  //     };
+  //   } catch (error) {
+  //     throw new HttpException("updateQuizDurations error", HttpStatus.INTERNAL_SERVER_ERROR, {
+  //       cause: error,
+  //     });
+  //   }
+  // }
 }
