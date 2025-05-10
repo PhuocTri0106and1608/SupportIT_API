@@ -11,6 +11,7 @@ import { ResponseType } from "@common/dtos";
 import { TokenPayloadAdminDto } from '../admin/dtos/admin-request.dto';
 import { AdminLogService } from "@modules/admin/services";
 import { RecruiterRepository } from '../recruiter/repositories/recruiter.repository';
+import { FilterCandidateListDto, FilterRecruiterListDto } from "./dtos";
 @Injectable()
 export class UserService {
     private userBloomFilter: BloomFilter;
@@ -162,4 +163,95 @@ export class UserService {
             }
         };
     }
+
+    async getCandidateList(query: FilterCandidateListDto): Promise<ResponseType> {
+        const { page = 1, limit = 10, email, name } = query;
+        const skip = (page - 1) * limit;
+
+        try {
+            const filter: any = {};
+            const userFilter: any = {};
+
+            if (email) userFilter.email = { $regex: email, $options: "i" };
+            if (name) userFilter.name = { $regex: name, $options: "i" };
+
+            const [candidates, total] = await Promise.all([
+                this.candidateRepository.findWithPagination(filter, skip, limit),
+                this.candidateRepository.countDocuments(filter),
+            ]);
+
+            const userIds = candidates.map(c => c.userId);
+            const users = await this.userRepository.find({ _id: { $in: userIds }, ...userFilter });
+
+            const userMap = new Map(users.map(user => [user._id.toString(), user]));
+            const finalItems = candidates
+                .filter(c => userMap.has(c.userId))
+                .map(c => ({
+                    ...c,
+                    user: userMap.get(c.userId),
+                }));
+
+            return {
+                code: CodeResponseEnum.SUCCESS,
+                data: {
+                    items: finalItems,
+                    meta: {
+                        total,
+                        page,
+                        limit,
+                        totalPages: Math.ceil(total / limit),
+                    },
+                },
+            };
+        } catch (error) {
+            throw new HttpException("getCandidateList error", HttpStatus.INTERNAL_SERVER_ERROR, { cause: error });
+        }
+    }
+    
+
+    async getRecruiterList(query: FilterRecruiterListDto): Promise<ResponseType> {
+        const { page = 1, limit = 10, email, companyName } = query;
+        const skip = (page - 1) * limit;
+
+        try {
+            const filter: any = {};
+            if (companyName) filter.companyName = { $regex: companyName, $options: "i" };
+
+            const [recruiters, total] = await Promise.all([
+                this.recruiterRepository.findWithPagination(filter, skip, limit),
+                this.recruiterRepository.countDocuments(filter),
+            ]);
+
+            const userIds = recruiters.map(r => r.userId);
+            const userFilter: any = {};
+            if (email) userFilter.email = { $regex: email, $options: "i" };
+
+            const users = await this.userRepository.find({ _id: { $in: userIds }, ...userFilter });
+
+            const userMap = new Map(users.map(user => [user._id.toString(), user]));
+            const finalItems = recruiters
+                .filter(r => userMap.has(r.userId))
+                .map(r => ({
+                    ...r,
+                    user: userMap.get(r.userId),
+                }));
+
+            return {
+                code: CodeResponseEnum.SUCCESS,
+                data: {
+                    items: finalItems,
+                    meta: {
+                        total,
+                        page,
+                        limit,
+                        totalPages: Math.ceil(total / limit),
+                    },
+                },
+            };
+        } catch (error) {
+            throw new HttpException("getRecruiterList error", HttpStatus.INTERNAL_SERVER_ERROR, { cause: error });
+        }
+    }
+      
+    
 }

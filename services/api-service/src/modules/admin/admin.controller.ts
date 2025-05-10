@@ -19,7 +19,7 @@ export class AdminController {
     @Post("createAdmin")
     @ApiOkResponseCustom(ResponseType, AdminResponseDto)
     async signUpAdminAccount(@Body() user: CreateAdminDto): Promise<ResponseType> {
-        return await this.adminService.signUpAdminAccount(user);
+        return this.adminService.signUpAdminAccount(user);
     }
 
     @Post("login")
@@ -27,6 +27,6 @@ export class AdminController {
     @ApiBody({ type: AdminLoginRequestDto })
     @ApiOkResponseCustom(ResponseType, AdminLoginResponseDto)
     async signInAdminAccount(@CurrentUser() adminInfo: TokenPayloadAdminDto) {
-        return await this.adminService.loginAdmin(adminInfo);
+        return this.adminService.loginAdmin(adminInfo);
     }
 }

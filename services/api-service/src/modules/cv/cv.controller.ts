@@ -125,7 +125,7 @@ export class CVController {
     )
     file: Express.Multer.File,
   ): Promise<ResponseType<{ imageUrl: string; publicId: string }>> {
-    return await this.mediaService.uploadFileToPublicBucket('support-it/cv', {
+    return this.mediaService.uploadFileToPublicBucket('support-it/cv', {
       file: file,
       fileName: file.originalname,
     });
@@ -154,7 +154,7 @@ export class CVController {
     )
     file: Express.Multer.File,
   ): Promise<ResponseType<{ imageUrl: string; publicId: string }>> {
-    return await this.mediaService.uploadFileToPublicBucket('support-it/images', {
+    return this.mediaService.uploadFileToPublicBucket('support-it/images', {
       file: file,
       fileName: file.originalname,
     });
@@ -163,7 +163,7 @@ export class CVController {
   @Delete('deleteFile')
   @ApiOkResponse({ type: ResponseType })
   async deleteFile(@Body() body: DeleteFileDto): Promise<ResponseType> {
-    return await this.mediaService.deleteFileFromPublicBucket(body.key);
+    return this.mediaService.deleteFileFromPublicBucket(body.key);
   }
 }
 

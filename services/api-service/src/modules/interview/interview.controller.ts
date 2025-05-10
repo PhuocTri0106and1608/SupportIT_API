@@ -20,7 +20,7 @@ export class InterviewController {
   @AnyRole(LoginRoleEnum.RECRUITER)
   @ApiOkResponseCustom(ResponseType)
   async createInterview(@Body() request: CreateInterviewDto): Promise<ResponseType> {
-    return await this.interviewService.createOrUpdateInterview(request);
+    return this.interviewService.createOrUpdateInterview(request);
   }
   
   @Get("getListInterviews")
@@ -28,7 +28,7 @@ export class InterviewController {
   @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   @ApiOkResponseCustom(ResponseType)
   async getListInterviews(@Query() query: FilterInterviewRequestDto): Promise<ResponseType> {
-    return await this.interviewService.getListInterviews(query);
+    return this.interviewService.getListInterviews(query);
   }
 
 }

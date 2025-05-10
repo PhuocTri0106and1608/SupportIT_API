@@ -1,7 +1,7 @@
 import { AnyRole, ApiOkResponseCustom, CheckAbilites, CurrentUser } from "@common/decorators";
 import { AuthGuard } from "@common/guards";
 import { IAuthPayload } from "@modules/auth/interfaces";
-import { Controller, Get, Param, Put, UseGuards } from "@nestjs/common";
+import { Controller, Get, Param, Put, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { UserService } from "./user.service";
 import { AdminActionEnum, LoginRoleEnum, SubjectEnum } from "@common/enums";
@@ -9,6 +9,7 @@ import { AdminAbilitiesGuard } from "@modules/admin/guards";
 import { AnyRoleGuard, JwtAccessTokenAuthGuard } from "@modules/auth/guards";
 import { TokenPayloadAdminDto } from "@modules/admin/dtos";
 import { ResponseType } from "@common/dtos";
+import { FilterCandidateListDto, FilterRecruiterListDto } from "./dtos";
 
 @Controller("users")
 @ApiTags("Users")
@@ -31,6 +32,26 @@ export class UserController {
         @Param('email') email: string,
         @CurrentUser() admin: TokenPayloadAdminDto
     ){
-        return await this.userService.grantRecruiterPermission(email, admin);
+        return this.userService.grantRecruiterPermission(email, admin);
+    }
+
+    @Get('candidates')
+    @CheckAbilites({ action: AdminActionEnum.READ, subject: SubjectEnum.CANDIDATES })
+    @UseGuards(JwtAccessTokenAuthGuard, AdminAbilitiesGuard)
+    @ApiOkResponseCustom(ResponseType)
+    async getCandidateList(
+        @Query() dto: FilterCandidateListDto
+    ) {
+        return this.userService.getCandidateList(dto);
+    }
+
+    @Get('recruiters')
+    @CheckAbilites({ action: AdminActionEnum.READ, subject: SubjectEnum.RECRUITERS })
+    @UseGuards(JwtAccessTokenAuthGuard, AdminAbilitiesGuard)
+    @ApiOkResponseCustom(ResponseType)
+    async getRecruiterList(
+        @Query() dto: FilterRecruiterListDto
+    ) {
+        return this.userService.getRecruiterList(dto);
     }
 }

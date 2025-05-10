@@ -32,7 +32,7 @@ export class QuizController {
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)
   async submitQuiz(@CurrentUser("id") candidateId: string, @Param("quizId") quizId: string, @Body() body: SubmitQuizDto): Promise<ResponseType> {
-    return await this.quizService.submit(quizId, candidateId, body);
+    return this.quizService.submit(quizId, candidateId, body);
   }
 
   @Get("getListSubmissions")
@@ -40,24 +40,24 @@ export class QuizController {
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)
   async getListSubmissions(@Query() query: FilterSubmissionsRequestDto): Promise<ResponseType> {
-    return await this.quizService.getListSubmissions(query);
+    return this.quizService.getListSubmissions(query);
   }
 
   @Get("getAllCategories")
   @ApiOkResponseCustom(ResponseType)
   async getAllCategories(): Promise<ResponseType> {
-    return await this.quizService.getAllCategories();
+    return this.quizService.getAllCategories();
   }
 
   @Get("getListQuizzes")
   @ApiOkResponseCustom(ResponseType)
   async getListQuizzes(@Query() query: FilterQuizzesRequestDto): Promise<ResponseType> {
-    return await this.quizService.getListQuizzes(query);
+    return this.quizService.getListQuizzes(query);
   }
 
   @Get("getQuizDetail/:quizId")
   @ApiOkResponseCustom(ResponseType)
   async getQuizDetail(@Param("quizId") quizId: string): Promise<ResponseType> {
-    return await this.quizService.getQuizById(quizId);
+    return this.quizService.getQuizById(quizId);
   }
 }
