@@ -10,6 +10,7 @@ import { CandidateRepository } from "@modules/candidate/repositories";
 import { Types } from "mongoose";
 import { env } from "@environments";
 import { RedisService } from "@modules/redis";
+import { logger } from "@modules/logger";
 @Injectable()
 export class CVService {
 
@@ -26,13 +27,13 @@ export class CVService {
     const { jd, userId } = request;
 
     try {
-      // Call Flask API to extract information from CV
-      const response = await axios.post(`${env.flask.EXTRACT_JD_URL}`, {
-        file_url: jd.fileUrl
+      // Gửi đoạn văn bản JD tới Flask API để trích xuất
+      const response = await axios.post(`${env.flask.EXTRACT_JD_TEXT}`, {
+        jd_text: jd.jdText
       });
 
       if (!response?.data) {
-        throw new HttpException("Error in extracting CV", HttpStatus.INTERNAL_SERVER_ERROR);
+        throw new HttpException("Error in extracting JD", HttpStatus.INTERNAL_SERVER_ERROR);
       }
 
       const extractJDResponse = response.data;
@@ -103,8 +104,10 @@ export class CVService {
       const candidate = await this.candidateRepository.findOne({ userId });
       if (!candidate) throw new HttpException("Candidate not found", HttpStatus.NOT_FOUND);
 
-      const cv = await this.CVRepository.findById(cvId);
-      const jd = await this.jdRepository.findById(jdId);
+      const [cv, jd] = await Promise.all([
+        this.CVRepository.findById(cvId),
+        this.jdRepository.findById(jdId)
+      ]);
 
       if (!cv || !jd) {
         throw new HttpException("CV or JD not found", HttpStatus.NOT_FOUND);
@@ -142,24 +145,25 @@ export class CVService {
         reviewCVResponse,
       });
 
-      // Update CV with evaluationId
-      await this.CVRepository.findOneAndUpdate(
-        { _id: cvId },
-        { $push: { listEvaluationIds: evaluation._id.toString() } },
-      );
-
-      // Create Application
-      const application = await this.applicationRepository.create({
-        candidateId: candidate._id,
-        cvId,
-        jdId,
-        evaluationId: evaluation._id.toString(),
-        status: "pending",
+      Promise.all([
+        this.CVRepository.findOneAndUpdate(
+          { _id: cvId },
+          { $push: { listEvaluationIds: evaluation._id.toString() } },
+        ),
+        this.applicationRepository.create({
+          candidateId: candidate._id,
+          cvId,
+          jdId,
+          evaluationId: evaluation._id.toString(),
+          status: "pending",
+        }),
+      ]).catch((err) => {
+        logger.error('Background error in CV update or application create:', err);
       });
 
       return {
         code: CodeResponseEnum.SUCCESS,
-        data: application,
+        data: evaluation,
       };
     } catch (error) {
       throw new HttpException("reviewCV error", HttpStatus.INTERNAL_SERVER_ERROR, {

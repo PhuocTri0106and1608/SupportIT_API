@@ -20,8 +20,7 @@ export class CVUploadDto {
 
 
 export class JDCreateDto {
-  @IsString() fileUrl: string;
-  @IsOptional() @IsString() fileName?: string;
+  @IsString() jdText: string;
   @IsOptional() @IsIn(["private", "public"]) visibility?: "private" | "public";
 }
 
