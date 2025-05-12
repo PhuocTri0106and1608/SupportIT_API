@@ -15,7 +15,7 @@ export class PermissionsRequestDto {
 
 export class AdminLoginRequestDto {
     @ApiProperty({ example: "admin" })
-    @IsEmail()
+    // @IsEmail()
     @IsNotEmpty()
     readonly name: string;
 
