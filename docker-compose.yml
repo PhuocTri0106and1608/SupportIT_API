@@ -89,6 +89,8 @@ services:
             - ./data/logs:/app/logs
         environment:
             OTEL_SERVICE_NAME: template
+        env_file:
+            - ./services/api-service/.env
         depends_on:
             - otel-collector
         # Optional to run local
