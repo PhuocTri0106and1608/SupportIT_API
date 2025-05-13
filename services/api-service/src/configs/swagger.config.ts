@@ -23,6 +23,6 @@ export const setupSwagger = (app: INestApplication): void => {
             persistAuthorization: true,
             spec: undefined
         },
-        // customJs: [`/docs/swagger-ui-init.js?v=${Date.now()}`]
+        customJs: [`/docs/swagger-ui-init.js?v=${Date.now()}`]
     });
 };

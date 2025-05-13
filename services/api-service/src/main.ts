@@ -20,8 +20,8 @@ async function bootstrap() {
     app.use(cookieParser(env.cookie.COOKIE_SECRET));
     logger.info("Set up cookie parser");
 
-    app.use(helmet());
-    logger.info("Set up helmet");
+    // app.use(helmet());
+    // logger.info("Set up helmet");
 
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
     logger.info("Started validation pipe");
