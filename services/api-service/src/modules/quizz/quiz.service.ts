@@ -34,6 +34,8 @@ export class QuizService {
       const feedback = answers.map(a => ({
         ...a,
         isCorrect: a.chosenOption === quiz.questions[a.qIndex].correctAnswer,
+        correctAnswer: quiz.questions[a.qIndex].correctAnswer,
+        explanation: quiz.questions[a.qIndex].explanation || "No explanation provided",
       }));
 
       const correctCount = feedback.filter(f => f.isCorrect).length;
