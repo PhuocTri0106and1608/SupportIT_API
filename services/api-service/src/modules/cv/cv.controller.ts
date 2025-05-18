@@ -9,7 +9,7 @@ import { MediaService } from "@modules/media/media.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AnyRoleGuard } from "@modules/auth/guards";
 import { LoginRoleEnum } from "@common/enums";
-import { CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, JDCreateDto } from "./dtos";
+import { CreateJdDto, CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto } from "./dtos";
 
 @Controller("cvs")
 @ApiTags("CVs")
@@ -24,7 +24,7 @@ export class CVController {
   @Post('uploadJD')
   async uploadJD(
     @CurrentUser() user,
-    @Body() jd: JDCreateDto
+    @Body() jd: CreateJdDto
   ): Promise<ResponseType> {
     return this.cvService.uploadJD({ jd, userId: user.id });
   }

@@ -32,9 +32,6 @@ export class JD extends BaseSchema {
 
   @Prop({ enum: ["private", "public"], default: "private" })
   visibility?: "private" | "public";
-
-  @Prop()
-  lastUpdatedAt?: Date;
 }
 
 export const JDSchema = SchemaFactory.createForClass(JD);

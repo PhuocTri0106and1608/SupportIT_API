@@ -3,7 +3,7 @@ import { IAuthPayload } from "@modules/auth/interfaces";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { ApplicationRepository, CVRepository, EvaluationRepository, JDRepository } from "./repositories";
 import { CVDocument, JDDocument } from "./schemas";
-import { CVDto, CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, JDCreateDto } from "./dtos";
+import { CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, CreateJdDto } from "./dtos";
 import axios from "axios";
 import { ResponseType } from "@common/dtos";
 import { CandidateRepository } from "@modules/candidate/repositories";
@@ -23,29 +23,13 @@ export class CVService {
     private readonly redisService: RedisService,
   ) { }
 
-  async uploadJD(request: { jd: JDCreateDto, userId: string }): Promise<ResponseType> {
+  async uploadJD(request: { jd: CreateJdDto, userId: string }): Promise<ResponseType> {
     const { jd, userId } = request;
 
     try {
-      // Gửi đoạn văn bản JD tới Flask API để trích xuất
-      const response = await axios.post(`${env.flask.EXTRACT_JD_TEXT}`, {
-        jd_text: jd.jdText
-      });
-
-      if (!response?.data) {
-        throw new HttpException("Error in extracting JD", HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-
-      const extractJDResponse = response.data;
       const createdJD = await this.jdRepository.create({
-        creatorUserId: userId,
-        title: extractJDResponse.title,
-        description: extractJDResponse.description,
-        companyName: extractJDResponse.companyName,
-        location: extractJDResponse.location,
-        requirements: extractJDResponse.requirements,
-        benefits: extractJDResponse.benefits,
-        visibility: jd.visibility || "private",
+        ...jd,
+        creatorUserId: userId
       });
 
       return {
@@ -116,19 +100,30 @@ export class CVService {
       // Call Flask API to evaluate CV against JD
       const response = await axios.post(`${env.flask.REVIEW_CV_URL}`, {
         cv: {
-          experience: cv.information.experience,
-          skills: cv.information.skills,
-          education: cv.information.education,
-          projects: cv.information.projects,
-          certifications: cv.information.certifications,
-          languages: cv.information.languages
+          experience: cv.information.experience || [],
+          skills: cv.information.skills || [],
+          education: cv.information.education || [],
+          projects: cv.information.projects || [],
+          certifications: cv.information.certifications || [],
+          languages: cv.information.languages || [],
         },
         jd: {
+          title: jd.title,
+          description: jd.description,
           requirements: {
-            skills: jd.requirements.skills,
-            details: jd.requirements.details,
-          }
-        }
+            experience: jd.requirements.experience || [],
+            skills: jd.requirements.skills || [],
+            education: jd.requirements.education || [],
+            projects: jd.requirements.projects || [],
+            summary: jd.requirements.summary || '',
+            certifications: jd.requirements.certifications || [],
+            languages: jd.requirements.languages || [],
+          },
+          benefits: jd.benefits || [],
+          companyName: jd.companyName || '',
+          location: jd.location || '',
+          visibility: jd.visibility || 'private',
+        },
       });
 
       if (!response?.data) {
@@ -390,7 +385,7 @@ export class CVService {
   }
   async deleteJD(id: string): Promise<ResponseType> {
     try {
-      const jd = await this.jdRepository.findOneAndUpdate({_id: new Types.ObjectId(id)}, { deletedAt: new Date() });
+      const jd = await this.jdRepository.findOneAndUpdate({ _id: new Types.ObjectId(id) }, { deletedAt: new Date() });
 
       if (!jd) {
         return {
