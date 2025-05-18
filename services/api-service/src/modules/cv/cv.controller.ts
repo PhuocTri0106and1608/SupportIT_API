@@ -38,7 +38,7 @@ export class CVController {
   }
 
   @Post("reviewCV/:cvId/:jdId")
-  async reviewCV(@CurrentUser() user, @Param() cvId: string, @Param() jdId: string): Promise<ResponseType> {
+  async reviewCV(@CurrentUser() user, @Param("cvId") cvId: string, @Param("jdId") jdId: string): Promise<ResponseType> {
     return this.cvService.reviewCV({ userId: user.id, cvId, jdId });
   }
 
@@ -125,6 +125,8 @@ export class CVController {
     )
     file: Express.Multer.File,
   ): Promise<ResponseType<{ imageUrl: string; publicId: string }>> {
+    console.log(file);
+    console.log(file.originalname);
     return this.mediaService.uploadFileToPublicBucket('support-it/cv', {
       file: file,
       fileName: file.originalname,
