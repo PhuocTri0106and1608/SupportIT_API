@@ -20,9 +20,6 @@ export class CV extends BaseSchema {
   @Prop({ type: BaseInformation })
   @Type(() => BaseInformation)
   information?: BaseInformation;
-
-  @Prop([String])
-  listEvaluationIds?: string[];
 }
 
 export const CVSchema = SchemaFactory.createForClass(CV);

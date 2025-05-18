@@ -17,9 +17,6 @@ export class Recruiter extends BaseSchema {
 
   @Prop({ type: String, required: false })
   companyWebsite?: string;
-
-  @Prop({ type: [String], required: true })
-  listJdIds: string[];
 }
 
 export const RecruiterSchema = SchemaFactory.createForClass(Recruiter);

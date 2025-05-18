@@ -27,9 +27,6 @@ export class Candidate extends BaseSchema {
   @Prop({ type: String, nullable: true })
   cvId?: string;
 
-  @Prop({ type: [String] })
-  appliedJobIds?: string[];
-
   @Prop({ type: TestResult })
   testResult?: TestResult;
 }

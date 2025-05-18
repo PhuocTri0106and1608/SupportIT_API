@@ -1,6 +1,6 @@
 import { AnyRole, CurrentUser } from "@common/decorators";
 import { AuthGuard } from "@common/guards";
-import { Controller, Get, UseGuards, Post, Body, Delete, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Param, Query } from "@nestjs/common";
+import { Controller, Get, UseGuards, Post, Body, Delete, UseInterceptors, UploadedFile, ParseFilePipe, MaxFileSizeValidator, FileTypeValidator, Param, Query, Patch } from "@nestjs/common";
 import { ApiBearerAuth, ApiOkResponse, ApiBody, ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { CVService } from "./cv.service";
 import { ResponseType } from "@common/dtos";
@@ -9,7 +9,7 @@ import { MediaService } from "@modules/media/media.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AnyRoleGuard } from "@modules/auth/guards";
 import { LoginRoleEnum } from "@common/enums";
-import { CreateJdDto, CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto } from "./dtos";
+import { CreateJdDto, CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, UpdateApplicationStatusDto } from "./dtos";
 
 @Controller("cvs")
 @ApiTags("CVs")
@@ -35,6 +35,16 @@ export class CVController {
     @Body() cv: CVUploadDto
   ): Promise<ResponseType> {
     return this.cvService.uploadCV({ cv, userId: user.id });
+  }
+
+  @Patch('application/:id/status')
+  @AnyRole(LoginRoleEnum.RECRUITER)
+  async updateApplicationStatus(
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateApplicationStatusDto,
+    @CurrentUser() user
+  ): Promise<ResponseType> {
+    return this.cvService.updateApplicationStatus(id, updateStatusDto.status, user.id);
   }
 
   @Post("reviewCV/:cvId/:jdId")
@@ -125,8 +135,6 @@ export class CVController {
     )
     file: Express.Multer.File,
   ): Promise<ResponseType<{ imageUrl: string; publicId: string }>> {
-    console.log(file);
-    console.log(file.originalname);
     return this.mediaService.uploadFileToPublicBucket('support-it/cv', {
       file: file,
       fileName: file.originalname,

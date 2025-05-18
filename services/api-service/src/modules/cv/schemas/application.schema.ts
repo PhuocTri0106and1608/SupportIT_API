@@ -23,4 +23,4 @@ export class Application extends BaseSchema {
 }
 
 export const ApplicationSchema = SchemaFactory.createForClass(Application);
-ApplicationSchema.index({ candidateId: 1, cvId: 1, jdId: 1 });
+ApplicationSchema.index({ candidateId: 1, cvId: 1, jdId: 1, status: 1 });

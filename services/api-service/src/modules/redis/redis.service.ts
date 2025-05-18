@@ -198,6 +198,13 @@ export class RedisService {
         return this.redis.keys(pattern);
     }
 
+    async deleteByPattern(pattern: string): Promise<void> {
+        const keys = await this.keys(pattern);
+        if (keys.length > 0) {
+            await this.redis.del(...keys);
+        }
+    }
+
     async unlock(key: string): Promise<boolean> {
         const lockKey = await this.getLockKey(key);
         const res = await this.redis.del(lockKey);

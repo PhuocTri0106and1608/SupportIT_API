@@ -28,7 +28,7 @@ export class GoogleOAuth2RecruiterStrategy extends PassportStrategy(Strategy, "g
 
     async generateState(preAuthData: object): Promise<string> {
         const state = uuidv4();
-        await this.redisService.set(`:${GoogleModule.name}:${OAuthProvidersEnum.GOOGLE}:${state}`, preAuthData, { ttl: 10 * 60 }); // Expires in 10 minutes
+        await this.redisService.set(`:${GoogleModule.name}:${OAuthProvidersEnum.GOOGLE}:${state}`, preAuthData, { ttl: 60 * 60 }); // Expires in 1 hours
         return state;
     }
 

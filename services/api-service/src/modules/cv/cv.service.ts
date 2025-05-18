@@ -140,20 +140,12 @@ export class CVService {
         reviewCVResponse,
       });
 
-      Promise.all([
-        this.CVRepository.findOneAndUpdate(
-          { _id: cvId },
-          { $push: { listEvaluationIds: evaluation._id.toString() } },
-        ),
-        this.applicationRepository.create({
-          candidateId: candidate._id,
-          cvId,
-          jdId,
-          evaluationId: evaluation._id.toString(),
-          status: "pending",
-        }),
-      ]).catch((err) => {
-        logger.error('Background error in CV update or application create:', err);
+      this.applicationRepository.create({
+        candidateId: candidate._id,
+        cvId,
+        jdId,
+        evaluationId: evaluation._id.toString(),
+        status: "pending",
       });
 
       return {
@@ -196,7 +188,7 @@ export class CVService {
         meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
       };
 
-      await this.redisService.set(cacheKey, resultData, { ttl: 60 * 60 });
+      await this.redisService.set(cacheKey, resultData, { ttl: 60 });
 
       return { code: CodeResponseEnum.SUCCESS, data: resultData };
     } catch (error) {
@@ -229,7 +221,7 @@ export class CVService {
         meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
       };
 
-      await this.redisService.set(cacheKey, resultData, { ttl: 60 * 60 });
+      await this.redisService.set(cacheKey, resultData, { ttl: 60 });
 
       return { code: CodeResponseEnum.SUCCESS, data: resultData };
     } catch (error) {
@@ -263,7 +255,7 @@ export class CVService {
         meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
       };
 
-      await this.redisService.set(cacheKey, resultData, { ttl: 60 * 60 });
+      await this.redisService.set(cacheKey, resultData, { ttl: 60 });
 
       return { code: CodeResponseEnum.SUCCESS, data: resultData };
     } catch (error) {
@@ -300,7 +292,7 @@ export class CVService {
         meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
       };
 
-      await this.redisService.set(cacheKey, resultData, { ttl: 60 * 60 });
+      await this.redisService.set(cacheKey, resultData, { ttl: 60 });
 
       return { code: CodeResponseEnum.SUCCESS, data: resultData };
     } catch (error) {
@@ -420,6 +412,52 @@ export class CVService {
       };
     } catch (error) {
       throw new HttpException("deleteCV error", HttpStatus.INTERNAL_SERVER_ERROR, { cause: error });
+    }
+  }
+
+  async updateApplicationStatus(
+    applicationId: string,
+    status: "pending" | "shortlisted" | "rejected" | "accepted",
+    recruiterId: string
+  ): Promise<ResponseType> {
+    try {
+      const application = await this.applicationRepository.findById(applicationId);
+
+      if (!application) {
+        return {
+          code: CodeResponseEnum.ERROR,
+          message: `Application with id ${applicationId} not found`,
+        };
+      }
+
+      // Kiểm tra xem JD có thuộc về recruiter này không
+      const jd = await this.jdRepository.findById(application.jdId);
+      if (!jd || jd.creatorUserId !== recruiterId) {
+        return {
+          code: CodeResponseEnum.ERROR,
+          message: "You don't have permission to update this application",
+        };
+      }
+
+      const updatedApplication = await this.applicationRepository.findOneAndUpdate(
+        { _id: new Types.ObjectId(applicationId) },
+        { status }
+      );
+
+      // Xóa cache liên quan
+      const cachePattern = 'applications:list:*';
+      await this.redisService.deleteByPattern(cachePattern);
+
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: updatedApplication,
+      };
+    } catch (error) {
+      throw new HttpException(
+        "updateApplicationStatus error",
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        { cause: error }
+      );
     }
   }
 }

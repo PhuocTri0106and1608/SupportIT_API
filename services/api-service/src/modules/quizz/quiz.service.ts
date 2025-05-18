@@ -150,7 +150,7 @@ export class QuizService {
 
       const categoryTree = buildTree(categoryPaths);
 
-      await this.redisService.set(cacheKey, categoryTree, { ttl: 60 * 60 });
+      await this.redisService.set(cacheKey, categoryTree, { ttl: 60 * 60 * 60 });
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -203,7 +203,7 @@ export class QuizService {
         },
       };
 
-      await this.redisService.set(cacheKey, resultData, { ttl: 60 * 60 });
+      await this.redisService.set(cacheKey, resultData, { ttl: 60 *60 * 60 });
 
       return {
         code: CodeResponseEnum.SUCCESS,
