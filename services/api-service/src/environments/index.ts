@@ -52,7 +52,8 @@ const {
     EVALUATE_INTERVIEW_URL,
     CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY,
-    CLOUDINARY_API_SECRET
+    CLOUDINARY_API_SECRET,
+    RAPID_API_KEY
 } = process.env;
 
 enum EnvEnum {
@@ -71,6 +72,10 @@ if (!CORS_ORIGINS) {
 
 if (!PORT) {
     throw new Error("PORT env is not define");
+}
+
+if (!RAPID_API_KEY) {
+    throw new Error("RAPID_API_KEY env is not define");
 }
 
 if (!API_URL || !CLIENT_URL || !API_VERSION) {
@@ -230,5 +235,9 @@ export const env = {
         EXTRACT_JD_URL,
         EXTRACT_JD_TEXT,
         EVALUATE_INTERVIEW_URL
+    },
+
+    judge0Api: {
+        RAPID_API_KEY
     }
 } as const;
