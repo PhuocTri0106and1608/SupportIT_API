@@ -2,7 +2,7 @@ import { CodeResponseEnum, LoginRoleEnum } from "@common/enums";
 import { IAuthPayload } from "@modules/auth/interfaces";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { ApplicationRepository, CVRepository, EvaluationRepository, JDRepository } from "./repositories";
-import { CVDocument, JDDocument } from "./schemas";
+import { CV, CVDocument, JD, JDDocument } from "./schemas";
 import { CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, CreateJdDto } from "./dtos";
 import axios from "axios";
 import { ResponseType } from "@common/dtos";
@@ -31,6 +31,8 @@ export class CVService {
         ...jd,
         creatorUserId: userId
       });
+
+      await this.redisService.set(`jd:${createdJD._id}`, createdJD, { ttl: 3600 });
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -68,6 +70,8 @@ export class CVService {
         information: extractCVResponse,
       });
 
+      await this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 });
+
       return {
         code: CodeResponseEnum.SUCCESS,
         data: createdCV,
@@ -79,8 +83,6 @@ export class CVService {
     }
   }
 
-
-
   async reviewCV(request: { userId: string, cvId: string, jdId: string }): Promise<ResponseType> {
     const { userId, cvId, jdId } = request;
 
@@ -88,10 +90,24 @@ export class CVService {
       const candidate = await this.candidateRepository.findOne({ userId });
       if (!candidate) throw new HttpException("Candidate not found", HttpStatus.NOT_FOUND);
 
-      const [cv, jd] = await Promise.all([
-        this.CVRepository.findById(cvId),
-        this.jdRepository.findById(jdId)
-      ]);
+      // Try to get CV and JD from cache first
+      let cv = await this.redisService.get<CV>(`cv:${cvId}`);
+      let jd = await this.redisService.get<JD>(`jd:${jdId}`);
+
+      // If not in cache, get from database
+      if (!cv) {
+        cv = await this.CVRepository.findById(cvId);
+        if (cv) {
+          await this.redisService.set(`cv:${cvId}`, cv, { ttl: 3600 });
+        }
+      }
+
+      if (!jd) {
+        jd = await this.jdRepository.findById(jdId);
+        if (jd) {
+          await this.redisService.set(`jd:${jdId}`, jd, { ttl: 3600 });
+        }
+      }
 
       if (!cv || !jd) {
         throw new HttpException("CV or JD not found", HttpStatus.NOT_FOUND);
