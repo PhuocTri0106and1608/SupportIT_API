@@ -24,18 +24,6 @@ export class LeetCodeProblem extends BaseSchema {
   @Prop([String])
   topicTags: string[];
 
-  @Prop()
-  likes: number;
-
-  @Prop()
-  dislikes: number;
-
-  @Prop()
-  acceptanceRate: number;
-
-  @Prop()
-  frequency: number;
-
   @Prop([
     {
       _id: false,
@@ -79,6 +67,7 @@ export class LeetCodeProblem extends BaseSchema {
         }
       ],
       expected: { type: String },
+      explanation: { type: String },
     }
   ])
   testcases: {
@@ -88,6 +77,7 @@ export class LeetCodeProblem extends BaseSchema {
       value: string;
     }[];
     expected: string;
+    explanation?: string;
   }[];
 }
 
