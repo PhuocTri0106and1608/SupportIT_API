@@ -6,6 +6,7 @@ import { LeetCodeService } from '@modules/leetcode/leetcode.service';
 import { SubmissionResultRepository } from './repositories';
 import * as fs from 'fs';
 import * as path from 'path';
+import { env } from '@environments';
 
 // Đọc file JSON ngôn ngữ được hỗ trợ
 const languageCodesFilePath = path.join(__dirname, 'newdatabase.languagecodes.json');
@@ -34,15 +35,11 @@ export class JudgeService {
     private readonly leetCodeService: LeetCodeService,
     private readonly submissionResultRepository: SubmissionResultRepository,
   ) {
-    this.rapidApiKey = process.env.RAPID_API_KEY || '';
+    this.rapidApiKey = env.judge0Api.RAPID_API_KEY || '';
   }
 
   async submitCode(userId: string, sourceCode: string, languageId: number, problemId: string): Promise<ResponseType> {
     try {
-      if (!this.rapidApiKey) {
-        throw new BadRequestException('RAPID_API_KEY is not configured');
-      }
-
       // Get problem from database
       const problemResponse = await this.leetCodeService.getProblemById(parseInt(problemId, 10));
       const problem = problemResponse.data;
