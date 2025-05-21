@@ -1,0 +1,483 @@
+[{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9238"
+  },
+  "code": 45,
+  "name": "Assembly (NASM 2.14.02)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9239"
+  },
+  "code": 46,
+  "name": "Bash (5.0.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f923a"
+  },
+  "code": 47,
+  "name": "Basic (FBC 1.07.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f923b"
+  },
+  "code": 104,
+  "name": "C (Clang 18.1.8)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f923c"
+  },
+  "code": 110,
+  "name": "C (Clang 19.1.7)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f923d"
+  },
+  "code": 75,
+  "name": "C (Clang 7.0.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f923e"
+  },
+  "code": 76,
+  "name": "C++ (Clang 7.0.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f923f"
+  },
+  "code": 103,
+  "name": "C (GCC 14.1.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9240"
+  },
+  "code": 105,
+  "name": "C++ (GCC 14.1.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9241"
+  },
+  "code": 48,
+  "name": "C (GCC 7.4.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9242"
+  },
+  "code": 52,
+  "name": "C++ (GCC 7.4.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9243"
+  },
+  "code": 49,
+  "name": "C (GCC 8.3.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9244"
+  },
+  "code": 53,
+  "name": "C++ (GCC 8.3.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9245"
+  },
+  "code": 50,
+  "name": "C (GCC 9.2.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9246"
+  },
+  "code": 54,
+  "name": "C++ (GCC 9.2.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9247"
+  },
+  "code": 86,
+  "name": "Clojure (1.10.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9248"
+  },
+  "code": 51,
+  "name": "C# (Mono 6.6.0.161)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9249"
+  },
+  "code": 77,
+  "name": "COBOL (GnuCOBOL 2.2)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f924a"
+  },
+  "code": 55,
+  "name": "Common Lisp (SBCL 2.0.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f924b"
+  },
+  "code": 90,
+  "name": "Dart (2.19.2)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f924c"
+  },
+  "code": 56,
+  "name": "D (DMD 2.089.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f924d"
+  },
+  "code": 57,
+  "name": "Elixir (1.9.4)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f924e"
+  },
+  "code": 58,
+  "name": "Erlang (OTP 22.2)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f924f"
+  },
+  "code": 44,
+  "name": "Executable"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9250"
+  },
+  "code": 87,
+  "name": "F# (.NET Core SDK 3.1.202)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9251"
+  },
+  "code": 59,
+  "name": "Fortran (GFortran 9.2.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9252"
+  },
+  "code": 60,
+  "name": "Go (1.13.5)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9253"
+  },
+  "code": 95,
+  "name": "Go (1.18.5)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9254"
+  },
+  "code": 106,
+  "name": "Go (1.22.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9255"
+  },
+  "code": 107,
+  "name": "Go (1.23.5)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9256"
+  },
+  "code": 88,
+  "name": "Groovy (3.0.3)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9257"
+  },
+  "code": 61,
+  "name": "Haskell (GHC 8.8.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9258"
+  },
+  "code": 96,
+  "name": "JavaFX (JDK 17.0.6, OpenJFX 22.0.2)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9259"
+  },
+  "code": 91,
+  "name": "Java (JDK 17.0.6)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f925a"
+  },
+  "code": 62,
+  "name": "Java (OpenJDK 13.0.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f925b"
+  },
+  "code": 63,
+  "name": "JavaScript (Node.js 12.14.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f925c"
+  },
+  "code": 93,
+  "name": "JavaScript (Node.js 18.15.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f925d"
+  },
+  "code": 97,
+  "name": "JavaScript (Node.js 20.17.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f925e"
+  },
+  "code": 102,
+  "name": "JavaScript (Node.js 22.08.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f925f"
+  },
+  "code": 78,
+  "name": "Kotlin (1.3.70)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9260"
+  },
+  "code": 111,
+  "name": "Kotlin (2.1.10)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9261"
+  },
+  "code": 64,
+  "name": "Lua (5.3.5)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9262"
+  },
+  "code": 89,
+  "name": "Multi-file program"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9263"
+  },
+  "code": 79,
+  "name": "Objective-C (Clang 7.0.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9264"
+  },
+  "code": 65,
+  "name": "OCaml (4.09.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9265"
+  },
+  "code": 66,
+  "name": "Octave (5.1.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9266"
+  },
+  "code": 67,
+  "name": "Pascal (FPC 3.0.4)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9267"
+  },
+  "code": 85,
+  "name": "Perl (5.28.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9268"
+  },
+  "code": 68,
+  "name": "PHP (7.4.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9269"
+  },
+  "code": 98,
+  "name": "PHP (8.3.11)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f926a"
+  },
+  "code": 43,
+  "name": "Plain Text"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f926b"
+  },
+  "code": 69,
+  "name": "Prolog (GNU Prolog 1.4.5)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f926c"
+  },
+  "code": 70,
+  "name": "Python (2.7.17)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f926d"
+  },
+  "code": 92,
+  "name": "Python (3.11.2)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f926e"
+  },
+  "code": 100,
+  "name": "Python (3.12.5)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f926f"
+  },
+  "code": 109,
+  "name": "Python (3.13.2)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9270"
+  },
+  "code": 71,
+  "name": "Python (3.8.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9271"
+  },
+  "code": 80,
+  "name": "R (4.0.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9272"
+  },
+  "code": 99,
+  "name": "R (4.4.1)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9273"
+  },
+  "code": 72,
+  "name": "Ruby (2.7.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9274"
+  },
+  "code": 73,
+  "name": "Rust (1.40.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9275"
+  },
+  "code": 108,
+  "name": "Rust (1.85.0)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9276"
+  },
+  "code": 81,
+  "name": "Scala (2.13.2)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9277"
+  },
+  "code": 82,
+  "name": "SQL (SQLite 3.27.2)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9278"
+  },
+  "code": 83,
+  "name": "Swift (5.2.3)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f9279"
+  },
+  "code": 74,
+  "name": "TypeScript (3.7.4)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f927a"
+  },
+  "code": 94,
+  "name": "TypeScript (5.0.3)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f927b"
+  },
+  "code": 101,
+  "name": "TypeScript (5.6.2)"
+},
+{
+  "_id": {
+    "$oid": "67fbadfe6d5eb817685f927c"
+  },
+  "code": 84,
+  "name": "Visual Basic.Net (vbnc 0.0.0.5943)"
+}]

@@ -24,20 +24,6 @@ export class LeetCodeProblem extends BaseSchema {
   @Prop([String])
   topicTags: string[];
 
-  @Prop([
-    {
-      _id: false,
-      input: { type: String },
-      output: { type: String },
-      explanation: { type: String },
-    },
-  ])
-  examples: {
-    input: string;
-    output: string;
-    explanation?: string;
-  }[];
-
   @Prop([String])
   hints: string[];
 
