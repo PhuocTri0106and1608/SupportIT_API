@@ -2,16 +2,37 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { LeetCodeProblemRepository } from './repositories';
 import { ResponseType } from '@common/dtos';
 import { CodeResponseEnum } from '@common/enums';
+import { RedisService } from '@modules/redis/redis.service';
+import { plainToClass } from 'class-transformer';
+import { LeetCodeProblemResponseDto, ProblemPaginationResponseDto } from './dtos';
 
 @Injectable()
 export class LeetCodeService {
-  constructor(private readonly leetCodeProblemRepository: LeetCodeProblemRepository) {}
+  private readonly CACHE_TTL_SECONDS = 3600;
+  private readonly CACHE_KEY_PREFIX = 'leetcode:';
+
+  constructor(
+    private readonly leetCodeProblemRepository: LeetCodeProblemRepository,
+    private readonly redisService: RedisService,
+  ) { }
 
   async getProblemById(id: number): Promise<ResponseType> {
+    const cacheKey = `${this.CACHE_KEY_PREFIX}problem:id:${id}`;
+    const cachedProblem = await this.redisService.get(cacheKey);
+
+    if (cachedProblem) {
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: cachedProblem,
+      };
+    }
+
     const problem = await this.leetCodeProblemRepository.findByProblemId(id);
     if (!problem) {
       throw new NotFoundException(`Problem with ID ${id} not found`);
     }
+
+    await this.redisService.set(cacheKey, problem, { ttl: this.CACHE_TTL_SECONDS });
 
     return {
       code: CodeResponseEnum.SUCCESS,
@@ -20,10 +41,22 @@ export class LeetCodeService {
   }
 
   async getProblemBySlug(slug: string): Promise<ResponseType> {
+    const cacheKey = `${this.CACHE_KEY_PREFIX}problem:slug:${slug}`;
+    const cachedProblem = await this.redisService.get(cacheKey);
+
+    if (cachedProblem) {
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: cachedProblem,
+      };
+    }
+
     const problem = await this.leetCodeProblemRepository.findByTitleSlug(slug);
     if (!problem) {
       throw new NotFoundException(`Problem with slug ${slug} not found`);
     }
+
+    await this.redisService.set(cacheKey, problem, { ttl: this.CACHE_TTL_SECONDS });
 
     return {
       code: CodeResponseEnum.SUCCESS,
@@ -37,6 +70,16 @@ export class LeetCodeService {
     difficulty?: string,
     tag?: string
   ): Promise<ResponseType> {
+    const cacheKey = `${this.CACHE_KEY_PREFIX}problems:page:${page}:limit:${limit}:difficulty:${difficulty || 'all'}:tag:${tag || 'all'}`;
+    const cachedResult = await this.redisService.get(cacheKey);
+
+    if (cachedResult) {
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: cachedResult,
+      };
+    }
+
     const skip = (page - 1) * limit;
     const filter: any = {};
 
@@ -53,37 +96,75 @@ export class LeetCodeService {
       this.leetCodeProblemRepository.countDocuments(filter),
     ]);
 
+    const transformedProblems = problems.map(problem =>
+      plainToClass(LeetCodeProblemResponseDto, problem as any, {
+        excludeExtraneousValues: true
+      })
+    );
+
+    const result = {
+      problems: transformedProblems,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+
+    const transformedResult = plainToClass(ProblemPaginationResponseDto, result, {
+      excludeExtraneousValues: true
+    });
+
+    await this.redisService.set(cacheKey, transformedResult, { ttl: this.CACHE_TTL_SECONDS });
+
     return {
       code: CodeResponseEnum.SUCCESS,
-      data: {
-        problems,
-        pagination: {
-          total,
-          page,
-          limit,
-          totalPages: Math.ceil(total / limit),
-        },
-      },
+      data: transformedResult,
     };
   }
 
   async getAllTopicTags(): Promise<ResponseType> {
+    const cacheKey = `${this.CACHE_KEY_PREFIX}topic:tags`;
+    const cachedTags = await this.redisService.get(cacheKey);
+
+    if (cachedTags) {
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: cachedTags,
+      };
+    }
+
     const problems = await this.leetCodeProblemRepository.find({});
     const tagsSet = new Set<string>();
-    
+
     problems.forEach((problem) => {
       problem.topicTags.forEach((tag: string) => {
         tagsSet.add(tag);
       });
     });
-    
+
+    const tags = Array.from(tagsSet).sort();
+
+    await this.redisService.set(cacheKey, tags, { ttl: this.CACHE_TTL_SECONDS });
+
     return {
       code: CodeResponseEnum.SUCCESS,
-      data: Array.from(tagsSet).sort(),
+      data: tags,
     };
   }
 
   async searchProblems(query: string): Promise<ResponseType> {
+    const cacheKey = `${this.CACHE_KEY_PREFIX}search:${query}`;
+    const cachedResults = await this.redisService.get(cacheKey);
+
+    if (cachedResults) {
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: cachedResults,
+      };
+    }
+
     const regex = new RegExp(query, 'i');
     const problems = await this.leetCodeProblemRepository.findByQuery({
       $or: [
@@ -92,6 +173,8 @@ export class LeetCodeService {
         { topicTags: { $regex: regex } },
       ],
     });
+
+    await this.redisService.set(cacheKey, problems, { ttl: this.CACHE_TTL_SECONDS });
 
     return {
       code: CodeResponseEnum.SUCCESS,

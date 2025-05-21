@@ -37,14 +37,12 @@ export class LeetCodeController {
   }
 
   @Get('problems/slug/:slug')
-  @UseGuards(JwtAccessTokenAuthGuard)
   @ApiOkResponseCustom(ResponseType)
   async getProblemBySlug(@Param('slug') slug: string) {
     return this.leetCodeService.getProblemBySlug(slug);
   }
 
   @Get('tags')
-  @UseGuards(JwtAccessTokenAuthGuard)
   @ApiOkResponseCustom(ResponseType)
   async getAllTags() {
     return this.leetCodeService.getAllTopicTags();

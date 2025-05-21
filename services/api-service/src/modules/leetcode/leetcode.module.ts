@@ -7,11 +7,13 @@ import { LeetCodeController } from './leetcode.controller';
 import { LeetCodeService } from './leetcode.service';
 import { LeetCodeProblem, LeetCodeProblemSchema } from './schemas/leetcode-problem.schema';
 import { LeetCodeProblemRepository } from './repositories';
+import { RedisModule } from '@modules/redis/redis.module';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     HttpModule,
+    RedisModule,
     MongooseModule.forFeature([
       { name: LeetCodeProblem.name, schema: LeetCodeProblemSchema },
     ]),
