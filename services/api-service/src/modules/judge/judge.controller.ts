@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JudgeService } from './judge.service';
 import { SubmitCodeDto } from './dto/submit-code.dto';
@@ -6,6 +6,8 @@ import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { AnyRole, ApiOkResponseCustom } from '@common/decorators';
 import { ResponseType } from '@common/dtos';
 import { LoginRoleEnum } from '@common/enums';
+import { AnyRoleGuard } from '@modules/auth/guards/any-role.guard';
+import { AuthGuard } from '@common/guards';
 
 @ApiTags('Submit Code')
 @ApiBearerAuth('access-token')
@@ -16,6 +18,7 @@ export class JudgeController {
   ) { }
 
   @Post('submit')
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)
   async submitCode(@CurrentUser('id') userId: string, @Body() submitCodeDto: SubmitCodeDto) {
@@ -30,19 +33,19 @@ export class JudgeController {
   }
 
   @Get('submissions')
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)
   async getSubmissions(
     @CurrentUser('id') currentUserId: string,
-    @Query('userId') userId?: string,
     @Query('problemId') problemId?: string,
   ) {
-    // Only allow administrators or the user themselves to view their submissions
-    const queryUserId = userId || currentUserId;
-    return this.judgeService.getSubmissions(queryUserId, problemId);
+    const queryProblemId = problemId ? parseInt(problemId) : undefined;
+    return this.judgeService.getSubmissions(currentUserId, queryProblemId);
   }
 
   @Get('submissions/:id')
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)
   async getSubmissionById(@Param('id') id: string) {

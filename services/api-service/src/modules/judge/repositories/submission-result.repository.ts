@@ -2,35 +2,29 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { SubmissionResult, SubmissionResultDocument } from '../schemas/submission-result.schema';
+import { BaseMongoRepository } from '@common/repositories';
 
 @Injectable()
-export class SubmissionResultRepository {
+export class SubmissionResultRepository extends BaseMongoRepository<SubmissionResultDocument> {
   constructor(
     @InjectModel(SubmissionResult.name)
-    private submissionResultModel: Model<SubmissionResultDocument>,
-  ) { }
-
-  async create(submissionResult: Partial<SubmissionResult>): Promise<SubmissionResult> {
-    const newSubmission = new this.submissionResultModel(submissionResult);
-    return newSubmission.save();
+    private readonly submissionResultModel: Model<SubmissionResultDocument>,
+  ) {
+    super(submissionResultModel);
   }
 
-  async findByUserId(userId: string): Promise<SubmissionResult[]> {
+  async findByUserId(userId: string): Promise<SubmissionResultDocument[]> {
     return this.submissionResultModel.find({ userId }).sort({ createdAt: -1 }).exec();
   }
 
-  async findByProblemId(problemId: string): Promise<SubmissionResult[]> {
+  async findByProblemId(problemId: number): Promise<SubmissionResultDocument[]> {
     return this.submissionResultModel.find({ problemId }).sort({ createdAt: -1 }).exec();
   }
 
-  async findByUserAndProblem(userId: string, problemId: string): Promise<SubmissionResult[]> {
+  async findByUserAndProblem(userId: string, problemId: number): Promise<SubmissionResultDocument[]> {
     return this.submissionResultModel
       .find({ userId, problemId })
       .sort({ createdAt: -1 })
       .exec();
   }
-
-  async findById(id: string): Promise<SubmissionResult> {
-    return this.submissionResultModel.findById(id).exec();
-  }
-} 
+}

@@ -38,10 +38,10 @@ export class JudgeService {
     this.rapidApiKey = env.judge0Api.RAPID_API_KEY || '';
   }
 
-  async submitCode(userId: string, sourceCode: string, languageId: number, problemId: string): Promise<ResponseType> {
+  async submitCode(userId: string, sourceCode: string, languageId: number, problemId: number): Promise<ResponseType> {
     try {
       // Get problem from database
-      const problemResponse = await this.leetCodeService.getProblemById(parseInt(problemId, 10));
+      const problemResponse = await this.leetCodeService.getProblemById(problemId);
       const problem = problemResponse.data;
 
       if (!problem) {
@@ -157,20 +157,11 @@ export class JudgeService {
     try {
       const params = testCase.params || [];
 
-      const stdin = params.map(param => {
-        try {
-          return JSON.parse(param.value);
-        } catch {
-          return param.value;
-        }
-      }).join('\n');
+      // Không cố gắng parse JSON trước, chỉ truyền giá trị thô
+      const stdin = params.map(param => param.value).join('\n');
 
-      let expectedOutput = '';
-      try {
-        expectedOutput = JSON.parse(testCase.expected);
-      } catch {
-        expectedOutput = testCase.expected;
-      }
+      // Dùng giá trị thô cho expected output
+      const expectedOutput = testCase.expected;
 
       return { stdin, expectedOutput };
     } catch (error) {
@@ -202,7 +193,7 @@ export class JudgeService {
     }));
   }
 
-  async getSubmissions(userId?: string, problemId?: string): Promise<ResponseType> {
+  async getSubmissions(userId?: string, problemId?: number): Promise<ResponseType> {
     try {
       let submissions = [];
 
@@ -371,7 +362,18 @@ rl.on('close', () => {
   private generateJSParamsParser(params: any[]): string {
     return params.map((param, index) => {
       const varName = param.name;
-      return `const ${varName} = JSON.parse(lines[${index}]);`;
+      // Kiểm tra xem có phải giá trị string được quote không
+      return `let ${varName} = lines[${index}];
+      // Nếu giá trị là chuỗi có dấu ngoặc kép ngoài cùng, loại bỏ ngoặc kép
+      if (typeof ${varName} === 'string' && ${varName}.startsWith('"') && ${varName}.endsWith('"')) {
+        ${varName} = ${varName}.slice(1, -1);
+      }
+      // Cố gắng parse JSON nếu có thể
+      try {
+        ${varName} = JSON.parse(${varName});
+      } catch (e) {
+        // Nếu không parse được, giữ nguyên giá trị
+      }`;
     }).join('\n  ');
   }
 

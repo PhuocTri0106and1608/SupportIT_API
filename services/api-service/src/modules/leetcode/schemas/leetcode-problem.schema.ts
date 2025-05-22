@@ -68,7 +68,6 @@ export class LeetCodeProblem extends BaseSchema {
 }
 
 export const LeetCodeProblemSchema = SchemaFactory.createForClass(LeetCodeProblem);
-LeetCodeProblemSchema.index({ problemId: 1 }, { unique: true });
 LeetCodeProblemSchema.index({ titleSlug: 1 }, { unique: true });
 LeetCodeProblemSchema.index({ difficulty: 1 });
 LeetCodeProblemSchema.index({ topicTags: 1 }); 

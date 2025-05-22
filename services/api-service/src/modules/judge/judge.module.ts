@@ -5,6 +5,7 @@ import { JudgeService } from './judge.service';
 import { SubmissionResult, SubmissionResultSchema } from './schemas';
 import { SubmissionResultRepository } from './repositories';
 import { LeetCodeModule } from '@modules/leetcode/leetcode.module';
+import { RedisModule } from '@modules/redis';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { LeetCodeModule } from '@modules/leetcode/leetcode.module';
       { name: SubmissionResult.name, schema: SubmissionResultSchema },
     ]),
     LeetCodeModule,
+    RedisModule
   ],
   controllers: [JudgeController],
   providers: [JudgeService, SubmissionResultRepository],

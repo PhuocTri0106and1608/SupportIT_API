@@ -22,6 +22,6 @@ export class SubmitCodeDto {
     example: '123',
   })
   @IsNotEmpty()
-  @IsString()
-  problemId: string;
+  @IsNumber()
+  problemId: number;
 } 

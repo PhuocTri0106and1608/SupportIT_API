@@ -2,11 +2,8 @@ import { BaseSchema } from '@common/schemas';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
-export type SubmissionResultDocument = HydratedDocument<SubmissionResult>;
-export type TestCaseResultDocument = HydratedDocument<TestCaseResult>;
 
-@Schema({ timestamps: true })
-export class TestCaseResult extends BaseSchema {
+export class TestCaseResult {
   @Prop({ type: Object })
   testCase: any;
 
@@ -27,19 +24,17 @@ export class TestCaseResult extends BaseSchema {
 
   @Prop()
   time: number;
-
+  
   @Prop()
   memory: number;
-
+  
   @Prop()
   message: string;
-
+  
   @Prop()
   passed: boolean;
 }
-
-export const TestCaseResultSchema = SchemaFactory.createForClass(TestCaseResult);
-TestCaseResultSchema.index({ problemId: 1, userId: 1 }, { unique: true });
+export type SubmissionResultDocument = HydratedDocument<SubmissionResult>;
 
 @Schema({ timestamps: true })
 export class SubmissionResult extends BaseSchema {
@@ -47,7 +42,7 @@ export class SubmissionResult extends BaseSchema {
   userId: string;
 
   @Prop({ required: true })
-  problemId: string;
+  problemId: number;
 
   @Prop({ required: true })
   languageId: number;
@@ -67,7 +62,7 @@ export class SubmissionResult extends BaseSchema {
   @Prop()
   totalTests: number;
 
-  @Prop({ type: [TestCaseResultSchema] })
+  @Prop({ type: [TestCaseResult] })
   testResults: TestCaseResult[];
 }
 

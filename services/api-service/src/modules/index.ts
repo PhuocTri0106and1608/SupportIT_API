@@ -16,3 +16,4 @@ export * from "./interview/interview.module";
 export * from "./quizz/quiz.module";
 export * from "./recruiter/recruiter.module";
 export * from './leetcode/leetcode.module';
+export * from './judge/judge.module';
