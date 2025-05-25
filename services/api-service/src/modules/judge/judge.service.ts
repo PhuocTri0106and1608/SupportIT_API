@@ -7,6 +7,7 @@ import { SubmissionResultRepository } from './repositories';
 import * as fs from 'fs';
 import * as path from 'path';
 import { env } from '@environments';
+import { RedisService } from '@modules/redis';
 
 // Đọc file JSON ngôn ngữ được hỗ trợ
 const languageCodesFilePath = path.join(__dirname, 'newdatabase.languagecodes.json');
@@ -32,13 +33,14 @@ export class JudgeService {
   private readonly judgeApiUrl: string = 'https://judge0-ce.p.rapidapi.com';
 
   constructor(
+    private readonly redisService: RedisService,
     private readonly leetCodeService: LeetCodeService,
     private readonly submissionResultRepository: SubmissionResultRepository,
   ) {
     this.rapidApiKey = env.judge0Api.RAPID_API_KEY || '';
   }
 
-  async submitCode(userId: string, sourceCode: string, languageId: number, problemId: number): Promise<ResponseType> {
+  async testCode(userId: string, sourceCode: string, languageId: number, problemId: number): Promise<ResponseType> {
     try {
       // Get problem from database
       const problemResponse = await this.leetCodeService.getProblemById(problemId);
@@ -46,6 +48,15 @@ export class JudgeService {
 
       if (!problem) {
         throw new BadRequestException(`Problem with ID ${problemId} not found`);
+      }
+
+      // Redis key for submission
+      const redisKey = `submission:${userId}:${problemId}`;
+
+      // Check test count from Redis
+      const testCount = await this.redisService.get<number>(`${redisKey}:testCount`, 0);
+      if (testCount >= 3) {
+        throw new BadRequestException('Maximum test attempts (3) reached. Please submit your code.');
       }
 
       // Generate wrapper code based on the language
@@ -63,23 +74,43 @@ export class JudgeService {
       const totalTests = testResults.length;
       const success = passedTests === totalTests;
 
-      // Save results to database if user is provided
-      if (userId) {
+      // Save test result to Redis
+      const submissionData = {
+        userId,
+        problemId,
+        languageId,
+        languageName: await this.getLanguageNameById(languageId),
+        sourceCode,
+        success,
+        passedTests,
+        totalTests,
+        testResults,
+        testCount: testCount + 1,
+      };
+
+      // Store submission in Redis sorted set with passedTests as score
+      await this.redisService.zadd(
+        redisKey,
+        passedTests,
+        JSON.stringify(submissionData)
+      );
+      await this.redisService.expire(redisKey, 3600); // TTL 1 hour
+
+      // Increment test count in Redis
+      await this.redisService.incrBy(`${redisKey}:testCount`, 1);
+      await this.redisService.expire(`${redisKey}:testCount`, 3600);
+
+      // Save to database only if this is the best result so far
+      const bestSubmission = await this.redisService.zrevrange(redisKey, 0, 0, true) as Array<{ member: string; score: number }>;
+      if (bestSubmission.length > 0 && bestSubmission[0].score === passedTests) {
         try {
-          const language = await this.getLanguageNameById(languageId);
-          await this.submissionResultRepository.create({
-            userId,
-            problemId,
-            languageId,
-            languageName: language,
-            sourceCode,
-            success,
-            passedTests,
-            totalTests,
-            testResults
-          });
+          await this.submissionResultRepository.updateOne(
+            { userId, problemId },
+            submissionData,
+            { upsert: true }
+          );
         } catch (error) {
-          this.logger.error(`Error saving submission result: ${error.message}`, error.stack);
+          this.logger.error(`Error saving submission result to database: ${error.message}`, error.stack);
         }
       }
 
@@ -90,8 +121,137 @@ export class JudgeService {
           success,
           passedTests,
           totalTests,
-          testResults
+          testResults,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Error testing code: ${error.message}`, error.stack);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to test code');
+    }
+  }
+
+  async submitCode(userId: string, sourceCode: string, languageId: number, problemId: number): Promise<ResponseType> {
+    try {
+      // Get problem from database
+      const problemResponse = await this.leetCodeService.getProblemById(problemId);
+      const problem = problemResponse.data;
+
+      if (!problem) {
+        throw new BadRequestException(`Problem with ID ${problemId} not found`);
+      }
+
+      // Redis key for submission
+      const redisKey = `submission:${userId}:${problemId}`;
+
+      // Check test count from Redis
+      const testCount = await this.redisService.get<number>(`${redisKey}:testCount`, 0);
+
+      if (testCount >= 3) {
+        // Get the best result from Redis
+        const bestSubmission = await this.redisService.zrevrange(redisKey, 0, 0, true) as Array<{ member: string; score: number }>;
+        if (bestSubmission.length === 0) {
+          throw new BadRequestException('No test results found. Please test your code first.');
         }
+
+        const submissionData = JSON.parse(bestSubmission[0].member);
+
+        // Ensure final result is saved to database
+        try {
+          await this.submissionResultRepository.updateOne(
+            { userId, problemId },
+            submissionData,
+            { upsert: true }
+          );
+        } catch (error) {
+          this.logger.error(`Error saving submission result to database: ${error.message}`, error.stack);
+        }
+
+        // Clear Redis data after submission
+        await this.redisService.deleteByPattern(`${redisKey}*`);
+
+        return {
+          code: CodeResponseEnum.SUCCESS,
+          data: {
+            success: submissionData.success,
+            passedTests: submissionData.passedTests,
+            totalTests: submissionData.totalTests,
+            testResults: submissionData.testResults,
+          },
+        };
+      }
+
+      // Generate wrapper code based on the language
+      const wrappedCode = await this.generateWrapperCode(languageId, sourceCode, problem);
+
+      // Evaluate each test case
+      const testResults = [];
+      for (const testCase of problem.testcases) {
+        const result = await this.evaluateTestCase(wrappedCode, languageId, testCase);
+        testResults.push(result);
+      }
+
+      // Calculate overall results
+      const passedTests = testResults.filter(result => result.status.id === 3).length;
+      const totalTests = testResults.length;
+      const success = passedTests === totalTests;
+
+      // Save test result to Redis
+      const submissionData = {
+        userId,
+        problemId,
+        languageId,
+        languageName: await this.getLanguageNameById(languageId),
+        sourceCode,
+        success,
+        passedTests,
+        totalTests,
+        testResults,
+        testCount: testCount + 1,
+      };
+
+      // Store submission in Redis sorted set with passedTests as score
+      await this.redisService.zadd(
+        redisKey,
+        passedTests,
+        JSON.stringify(submissionData)
+      );
+      await this.redisService.expire(redisKey, 3600);
+
+      // Increment test count in Redis
+      await this.redisService.incrBy(`${redisKey}:testCount`, 1);
+      await this.redisService.expire(`${redisKey}:testCount`, 3600);
+
+      // Save to database only if this is the best result
+      const bestSubmission = await this.redisService.zrevrange(redisKey, 0, 0, true) as Array<{ member: string; score: number }>;
+      if (bestSubmission.length > 0 && bestSubmission[0].score === passedTests) {
+        try {
+          await this.submissionResultRepository.updateOne(
+            { userId, problemId },
+            submissionData,
+            { upsert: true }
+          );
+        } catch (error) {
+          this.logger.error(`Error saving submission result to database: ${error.message}`, error.stack);
+        }
+      }
+
+      // Clear Redis data after submission if testCount reaches 3
+      if (submissionData.testCount >= 3) {
+        await this.redisService.deleteByPattern(`${redisKey}*`);
+      }
+
+      // Return response
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: {
+          success,
+          passedTests,
+          totalTests,
+          testResults,
+        },
       };
     } catch (error) {
       this.logger.error(`Error submitting code: ${error.message}`, error.stack);

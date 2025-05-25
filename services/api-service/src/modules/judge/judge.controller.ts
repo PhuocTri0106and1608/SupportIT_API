@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JudgeService } from './judge.service';
-import { SubmitCodeDto } from './dto/submit-code.dto';
+import { SubmitCodeDto, TestCodeDto } from './dto/submit-code.dto';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { AnyRole, ApiOkResponseCustom } from '@common/decorators';
 import { ResponseType } from '@common/dtos';
@@ -16,6 +16,14 @@ export class JudgeController {
   constructor(
     private readonly judgeService: JudgeService,
   ) { }
+  @Post('test')
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.CANDIDATE)
+  @ApiOkResponseCustom(ResponseType)
+  async testCode(@CurrentUser('id') userId: string, @Body() testCodeDto: TestCodeDto) {
+    const { sourceCode, languageId, problemId } = testCodeDto;
+    return this.judgeService.testCode(userId, sourceCode, languageId, problemId);
+  }
 
   @Post('submit')
   @UseGuards(AuthGuard, AnyRoleGuard)

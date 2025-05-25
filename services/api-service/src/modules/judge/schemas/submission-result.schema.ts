@@ -64,6 +64,9 @@ export class SubmissionResult extends BaseSchema {
 
   @Prop({ type: [TestCaseResult] })
   testResults: TestCaseResult[];
+
+  @Prop({ default: 0 })
+  testCount: number;
 }
 
 export const SubmissionResultSchema = SchemaFactory.createForClass(SubmissionResult);

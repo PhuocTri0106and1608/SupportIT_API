@@ -219,7 +219,13 @@ export class RedisService {
         return `cache:lock:${key}`;
     }
 
-    async zadd(key: string, score: number, member: string): Promise<number> {
+    async zadd(key: string, score: number, member: string, config: { ttl: number } = { ttl: 600 }): Promise<number> {
+        const chain = this.redis.multi().zadd(key, score, member);
+
+        if (config.ttl) {
+            chain.expire(key, config.ttl);
+        }
+
         return this.redis.zadd(key, score, member);
     }
 
@@ -228,17 +234,18 @@ export class RedisService {
     }
 
     async zrevrange(key: string, start: number, stop: number, withScores: boolean = false): Promise<string[] | Array<{ member: string; score: number }>> {
-        const result = await this.redis.zrevrange(key, start, stop, "WITHSCORES");
+        const result = await this.redis.zrevrange(key, start, stop, withScores ? "WITHSCORES" : undefined);
 
         if (!withScores) {
-            return result.filter((_, index) => index % 2 === 0);
+            return result; // Trả về string[] khi withScores = false
         }
 
-        const formattedResult = [];
+        // Khi withScores = true, định dạng kết quả thành Array<{ member: string; score: number }>
+        const formattedResult: Array<{ member: string; score: number }> = [];
         for (let i = 0; i < result.length; i += 2) {
             formattedResult.push({
                 member: result[i],
-                score: parseFloat(result[i + 1])
+                score: parseFloat(result[i + 1] || "0"), // Đảm bảo score là số, xử lý trường hợp undefined
             });
         }
         return formattedResult;

@@ -25,3 +25,5 @@ export class SubmitCodeDto {
   @IsNumber()
   problemId: number;
 } 
+
+export class TestCodeDto extends SubmitCodeDto { }
