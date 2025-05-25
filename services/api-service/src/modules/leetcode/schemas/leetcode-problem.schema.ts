@@ -50,11 +50,11 @@ export class LeetCodeProblem extends BaseSchema {
           name: { type: String },
           type: { type: String },
           value: { type: String },
-        }
+        },
       ],
       expected: { type: String },
       explanation: { type: String },
-    }
+    },
   ])
   testcases: {
     params: {
@@ -70,4 +70,4 @@ export class LeetCodeProblem extends BaseSchema {
 export const LeetCodeProblemSchema = SchemaFactory.createForClass(LeetCodeProblem);
 LeetCodeProblemSchema.index({ titleSlug: 1 }, { unique: true });
 LeetCodeProblemSchema.index({ difficulty: 1 });
-LeetCodeProblemSchema.index({ topicTags: 1 }); 
+LeetCodeProblemSchema.index({ topicTags: 1 });

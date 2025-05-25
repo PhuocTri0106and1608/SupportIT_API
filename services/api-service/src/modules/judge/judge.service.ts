@@ -39,6 +39,28 @@ export class JudgeService {
   ) {
     this.rapidApiKey = env.judge0Api.RAPID_API_KEY || '';
   }
+  async getRankingByProblem(problemId: number): Promise<Array<{
+    userId: string;
+    passedTests: number;
+    totalTests: number;
+    executionTime: number;
+    languageName: string;
+  }>> {
+    try {
+      const submissions = await this.submissionResultRepository.findByProblemIdForRanking(problemId);
+
+      return submissions.map(submission => ({
+        userId: submission.userId,
+        passedTests: submission.passedTests,
+        totalTests: submission.totalTests,
+        executionTime: submission.executionTime,
+        languageName: submission.languageName,
+      }));
+    } catch (error) {
+      this.logger.error(`Error fetching ranking for problem ${problemId}: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
 
   async testCode(userId: string, sourceCode: string, languageId: number, problemId: number): Promise<ResponseType> {
     try {
@@ -53,11 +75,8 @@ export class JudgeService {
       // Redis key for submission
       const redisKey = `submission:${userId}:${problemId}`;
 
-      // Check test count from Redis
+      // Get current test count from Redis
       const testCount = await this.redisService.get<number>(`${redisKey}:testCount`, 0);
-      if (testCount >= 3) {
-        throw new BadRequestException('Maximum test attempts (3) reached. Please submit your code.');
-      }
 
       // Generate wrapper code based on the language
       const wrappedCode = await this.generateWrapperCode(languageId, sourceCode, problem);
@@ -73,6 +92,7 @@ export class JudgeService {
       const passedTests = testResults.filter(result => result.status.id === 3).length;
       const totalTests = testResults.length;
       const success = passedTests === totalTests;
+      const executionTime = testResults.reduce((sum, result) => sum + (result.time || 0), 0); // Tổng thời gian chạy (mili-giây)
 
       // Save test result to Redis
       const submissionData = {
@@ -86,12 +106,14 @@ export class JudgeService {
         totalTests,
         testResults,
         testCount: testCount + 1,
+        executionTime,
       };
 
-      // Store submission in Redis sorted set with passedTests as score
+      // Store submission in Redis sorted set with composite score (passedTests * 1e9 + (1e9 - executionTime))
+      const compositeScore = passedTests * 1e9 + (1e9 - executionTime); // Ưu tiên passedTests, sau đó executionTime nhỏ hơn
       await this.redisService.zadd(
         redisKey,
-        passedTests,
+        compositeScore,
         JSON.stringify(submissionData)
       );
       await this.redisService.expire(redisKey, 3600); // TTL 1 hour
@@ -102,7 +124,7 @@ export class JudgeService {
 
       // Save to database only if this is the best result so far
       const bestSubmission = await this.redisService.zrevrange(redisKey, 0, 0, true) as Array<{ member: string; score: number }>;
-      if (bestSubmission.length > 0 && bestSubmission[0].score === passedTests) {
+      if (bestSubmission.length > 0 && bestSubmission[0].score === compositeScore) {
         try {
           await this.submissionResultRepository.updateOne(
             { userId, problemId },
@@ -122,6 +144,7 @@ export class JudgeService {
           passedTests,
           totalTests,
           testResults,
+          executionTime,
         },
       };
     } catch (error) {
@@ -146,42 +169,8 @@ export class JudgeService {
       // Redis key for submission
       const redisKey = `submission:${userId}:${problemId}`;
 
-      // Check test count from Redis
+      // Get current test count from Redis
       const testCount = await this.redisService.get<number>(`${redisKey}:testCount`, 0);
-
-      if (testCount >= 3) {
-        // Get the best result from Redis
-        const bestSubmission = await this.redisService.zrevrange(redisKey, 0, 0, true) as Array<{ member: string; score: number }>;
-        if (bestSubmission.length === 0) {
-          throw new BadRequestException('No test results found. Please test your code first.');
-        }
-
-        const submissionData = JSON.parse(bestSubmission[0].member);
-
-        // Ensure final result is saved to database
-        try {
-          await this.submissionResultRepository.updateOne(
-            { userId, problemId },
-            submissionData,
-            { upsert: true }
-          );
-        } catch (error) {
-          this.logger.error(`Error saving submission result to database: ${error.message}`, error.stack);
-        }
-
-        // Clear Redis data after submission
-        await this.redisService.deleteByPattern(`${redisKey}*`);
-
-        return {
-          code: CodeResponseEnum.SUCCESS,
-          data: {
-            success: submissionData.success,
-            passedTests: submissionData.passedTests,
-            totalTests: submissionData.totalTests,
-            testResults: submissionData.testResults,
-          },
-        };
-      }
 
       // Generate wrapper code based on the language
       const wrappedCode = await this.generateWrapperCode(languageId, sourceCode, problem);
@@ -197,6 +186,7 @@ export class JudgeService {
       const passedTests = testResults.filter(result => result.status.id === 3).length;
       const totalTests = testResults.length;
       const success = passedTests === totalTests;
+      const executionTime = testResults.reduce((sum, result) => sum + (result.time || 0), 0); // Tổng thời gian chạy (mili-giây)
 
       // Save test result to Redis
       const submissionData = {
@@ -210,12 +200,14 @@ export class JudgeService {
         totalTests,
         testResults,
         testCount: testCount + 1,
+        executionTime,
       };
 
-      // Store submission in Redis sorted set with passedTests as score
+      // Store submission in Redis sorted set with composite score (passedTests * 1e9 + (1e9 - executionTime))
+      const compositeScore = passedTests * 1e9 + (1e9 - executionTime); // Ưu tiên passedTests, sau đó executionTime nhỏ hơn
       await this.redisService.zadd(
         redisKey,
-        passedTests,
+        compositeScore,
         JSON.stringify(submissionData)
       );
       await this.redisService.expire(redisKey, 3600);
@@ -224,33 +216,37 @@ export class JudgeService {
       await this.redisService.incrBy(`${redisKey}:testCount`, 1);
       await this.redisService.expire(`${redisKey}:testCount`, 3600);
 
-      // Save to database only if this is the best result
+      // Get the best result from Redis
       const bestSubmission = await this.redisService.zrevrange(redisKey, 0, 0, true) as Array<{ member: string; score: number }>;
-      if (bestSubmission.length > 0 && bestSubmission[0].score === passedTests) {
-        try {
-          await this.submissionResultRepository.updateOne(
-            { userId, problemId },
-            submissionData,
-            { upsert: true }
-          );
-        } catch (error) {
-          this.logger.error(`Error saving submission result to database: ${error.message}`, error.stack);
-        }
+      if (bestSubmission.length === 0) {
+        throw new BadRequestException('No test results found. Please test your code first.');
       }
 
-      // Clear Redis data after submission if testCount reaches 3
-      if (submissionData.testCount >= 3) {
-        await this.redisService.deleteByPattern(`${redisKey}*`);
+      const bestSubmissionData = JSON.parse(bestSubmission[0].member);
+
+      // Save the best result to database
+      try {
+        await this.submissionResultRepository.updateOne(
+          { userId, problemId },
+          bestSubmissionData,
+          { upsert: true }
+        );
+      } catch (error) {
+        this.logger.error(`Error saving submission result to database: ${error.message}`, error.stack);
       }
 
-      // Return response
+      // Clear Redis data after submission
+      await this.redisService.deleteByPattern(`${redisKey}*`);
+
+      // Return response with the best result
       return {
         code: CodeResponseEnum.SUCCESS,
         data: {
-          success,
-          passedTests,
-          totalTests,
-          testResults,
+          success: bestSubmissionData.success,
+          passedTests: bestSubmissionData.passedTests,
+          totalTests: bestSubmissionData.totalTests,
+          testResults: bestSubmissionData.testResults,
+          executionTime: bestSubmissionData.executionTime,
         },
       };
     } catch (error) {
@@ -272,31 +268,34 @@ export class JudgeService {
           source_code: sourceCode,
           language_id: languageId,
           stdin,
-          expected_output: expectedOutput
+          expected_output: expectedOutput,
         },
         {
           headers: {
             'X-RapidAPI-Key': this.rapidApiKey,
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+          },
         }
       );
 
       const submissionResult = response.data;
 
+      // Chuyển time từ giây sang mili-giây
+      const executionTimeMs = parseFloat(submissionResult.time || '0') * 1000;
+
       return {
         testCase,
         status: {
           id: submissionResult.status.id,
-          description: submissionResult.status.description
+          description: submissionResult.status.description,
         },
         stdout: submissionResult.stdout || '',
         stderr: submissionResult.stderr || '',
         compile_output: submissionResult.compile_output || '',
-        time: submissionResult.time,
+        time: executionTimeMs, // Lưu thời gian dưới dạng mili-giây
         memory: submissionResult.memory,
         message: submissionResult.message || '',
-        passed: submissionResult.status.id === 3  // 3 = Accepted
+        passed: submissionResult.status.id === 3, // 3 = Accepted
       };
     } catch (error) {
       this.logger.error(`Error evaluating test case: ${error.message}`);
@@ -304,11 +303,12 @@ export class JudgeService {
         testCase,
         status: {
           id: -1,
-          description: 'Evaluation Error'
+          description: 'Evaluation Error',
         },
         stderr: error.message,
         passed: false,
-        error: true
+        error: true,
+        time: 0, // Đặt thời gian là 0 nếu có lỗi
       };
     }
   }

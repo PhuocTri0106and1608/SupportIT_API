@@ -67,7 +67,11 @@ export class SubmissionResult extends BaseSchema {
 
   @Prop({ default: 0 })
   testCount: number;
+  
+  @Prop({ required: true, default: 0 })
+  executionTime: number; // Tổng thời gian chạy của tất cả test case (mili-giây)
 }
 
 export const SubmissionResultSchema = SchemaFactory.createForClass(SubmissionResult);
 SubmissionResultSchema.index({ problemId: 1, userId: 1 }, { unique: true });
+SubmissionResultSchema.index({ problemId: 1, passedTests: -1, executionTime: 1 });

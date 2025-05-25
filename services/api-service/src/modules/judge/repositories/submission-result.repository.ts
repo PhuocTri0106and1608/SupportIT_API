@@ -21,6 +21,10 @@ export class SubmissionResultRepository extends BaseMongoRepository<SubmissionRe
     return this.submissionResultModel.find({ problemId }).sort({ createdAt: -1 }).exec();
   }
 
+  async findByProblemIdForRanking(problemId: number): Promise<SubmissionResultDocument[]> {
+    return this.submissionResultModel.find({ problemId }).sort({ passedTests: -1, executionTime: 1 }).select('userId passedTests totalTests executionTime languageName').exec();
+  }
+
   async findByUserAndProblem(userId: string, problemId: number): Promise<SubmissionResultDocument[]> {
     return this.submissionResultModel
       .find({ userId, problemId })
