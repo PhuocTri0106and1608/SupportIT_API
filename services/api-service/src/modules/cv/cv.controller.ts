@@ -10,6 +10,7 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import { AnyRoleGuard } from "@modules/auth/guards";
 import { LoginRoleEnum } from "@common/enums";
 import { CreateJdDto, CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, UpdateApplicationStatusDto } from "./dtos";
+import { IAuthPayload } from "@modules/auth/interfaces";
 
 @Controller("cvs")
 @ApiTags("CVs")
@@ -23,10 +24,10 @@ export class CVController {
   ) { }
   @Post('uploadJD')
   async uploadJD(
-    @CurrentUser() user,
+    @CurrentUser() user: IAuthPayload,
     @Body() jd: CreateJdDto
   ): Promise<ResponseType> {
-    return this.cvService.uploadJD({ jd, userId: user.id });
+    return this.cvService.uploadJD({ jd, userId: user.id, isRecruiter: user.canBeRecruiter });
   }
 
   @Post('uploadCV')
@@ -50,6 +51,11 @@ export class CVController {
   @Post("reviewCV/:cvId/:jdId")
   async reviewCV(@CurrentUser() user, @Param("cvId") cvId: string, @Param("jdId") jdId: string): Promise<ResponseType> {
     return this.cvService.reviewCV({ userId: user.id, cvId, jdId });
+  }
+
+  @Post("applyCV/:cvId/:jdId")
+  async applyCV(@CurrentUser() user, @Param("cvId") cvId: string, @Param("jdId") jdId: string): Promise<ResponseType> {
+    return this.cvService.applyCV({ userId: user.id, cvId, jdId });
   }
 
   // Endpoint để lấy danh sách Applications

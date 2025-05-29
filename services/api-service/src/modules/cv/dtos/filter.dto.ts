@@ -1,6 +1,6 @@
 import { PageOptionsDto } from "@common/dtos";
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsOptional, IsString, IsEnum } from "class-validator";
+import { IsOptional, IsString, IsEnum, IsBoolean } from "class-validator";
 
 export class FilterApplicationsRequestDto extends PageOptionsDto {
   @ApiPropertyOptional({ example: 'candidateId123' })
@@ -88,4 +88,9 @@ export class FilterJDsRequestDto extends PageOptionsDto {
   @IsEnum(['private', 'public'])
   @IsOptional()
   visibility?: 'private' | 'public';
+
+  @ApiPropertyOptional({ example: true })
+  @IsBoolean()
+  @IsOptional()
+  verified?: boolean;
 }

@@ -32,6 +32,9 @@ export class JD extends BaseSchema {
 
   @Prop({ enum: ["private", "public"], default: "private" })
   visibility?: "private" | "public";
+
+  @Prop({ required: true, default: false })
+  verified: string;
 }
 
 export const JDSchema = SchemaFactory.createForClass(JD);
