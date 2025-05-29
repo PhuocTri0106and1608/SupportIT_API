@@ -21,10 +21,4 @@ export class SignUpRequestDto {
     @IsString()
     @IsOptional()
     companyWebsite?: string;
-
-    @ApiPropertyOptional({ type: [String], example: ["jd1", "jd2", "jd3"] })
-    @IsArray()
-    @IsOptional()
-    @IsString({ each: true })
-    listJdIds?: string[];
 }

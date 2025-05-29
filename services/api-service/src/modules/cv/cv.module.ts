@@ -16,7 +16,7 @@ import { MediaModule } from "@modules/media/media.module";
     CandidateModule,
     MediaModule],
   providers: [CVService, CVRepository, ApplicationRepository, EvaluationRepository, JDRepository],
-  exports: [CVService, CVRepository],
+  exports: [CVService, CVRepository, JDRepository, EvaluationRepository, ApplicationRepository],
   controllers: [CVController]
 })
 export class CVModule { }
