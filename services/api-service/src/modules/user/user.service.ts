@@ -12,6 +12,7 @@ import { TokenPayloadAdminDto } from '../admin/dtos/admin-request.dto';
 import { AdminLogService } from "@modules/admin/services";
 import { RecruiterRepository } from '../recruiter/repositories/recruiter.repository';
 import { FilterCandidateListDto, FilterRecruiterListDto } from "./dtos";
+import { Types } from "mongoose";
 @Injectable()
 export class UserService {
     private userBloomFilter: BloomFilter;
@@ -150,18 +151,35 @@ export class UserService {
         }
     }
 
+    async updateAvatar(user: IAuthPayload, avatar: string): Promise<ResponseType> {
+        try {
+            await this.userRepository.findOneAndUpdate({ _id: new Types.ObjectId(user.id) }, { set: { avatar } });
+            const profile = await this.getProfile(user);
+            return {
+                code: CodeResponseEnum.SUCCESS,
+                data: profile
+            };
+        } catch (error) {
+            throw new HttpException("updateAvatar error", HttpStatus.INTERNAL_SERVER_ERROR, {
+                cause: error,
+            });
+        }
+    }
 
-    async getProfile(request: IAuthPayload): Promise<ResponseType> {
-        const { id, loginRole } = request;
-        const user = await this.userRepository.findOne({ _id: id }, true, ["-googleAccessToken", "-googleRefreshToken"]);
-        const extraInfo = loginRole === LoginRoleEnum.CANDIDATE ? await this.candidateRepository.findOne({ userId: id }) : await this.recruiterRepository.findOne({ userId: id });
-        return {
-            code: CodeResponseEnum.SUCCESS,
-            data: {
-            ...user,
+    async getProfile(request: IAuthPayload) {
+        try {
+            const { id, loginRole } = request;
+            const user = await this.userRepository.findOne({ _id: id }, true, ["-googleAccessToken", "-googleRefreshToken"]);
+            const extraInfo = loginRole === LoginRoleEnum.CANDIDATE ? await this.candidateRepository.findOne({ userId: id }) : await this.recruiterRepository.findOne({ userId: id });
+            return {
+                ...user,
                 extraInfo
-            }
-        };
+            };
+        } catch (error) {
+            throw new HttpException("getProfile error", HttpStatus.INTERNAL_SERVER_ERROR, {
+                cause: error,
+            });
+        }
     }
 
     async getCandidateList(query: FilterCandidateListDto): Promise<ResponseType> {

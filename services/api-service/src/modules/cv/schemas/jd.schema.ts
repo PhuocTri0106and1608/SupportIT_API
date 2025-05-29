@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument } from "mongoose";
 import { BaseSchema } from "@common/schemas";
 import { Type } from "class-transformer";
-import { BaseInformation } from "./base-information.schema";
+import { BaseInformation } from "../../../common/schemas";
 
 export type JDDocument = HydratedDocument<JD>;
 

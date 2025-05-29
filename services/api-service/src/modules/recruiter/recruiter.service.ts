@@ -2,6 +2,9 @@ import { CodeResponseEnum, LoginRoleEnum } from "@common/enums";
 import { IAuthPayload } from "@modules/auth/interfaces";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { RecruiterRepository } from "./repositories";
+import { Recruiter, RecruiterDocument } from "./schemas";
+import { UpdateRecruiterDto } from "./dtos";
+import { ResponseType } from "@common/dtos";
 
 @Injectable()
 export class RecruiterService {
@@ -10,43 +13,30 @@ export class RecruiterService {
     private readonly recruiterRepository: RecruiterRepository
   ) { }
 
-  // async createOrUpdateRecruiter(request: RecruiterDto): Promise<RecruiterDocument> {
-  //   const { userId, cvId, appliedJobIds, testResult } = request;
-
-  //   try {
-  //     const existingRecruiter = await this.recruiterRepository.findOne({ userId: userId }, false);
-
-  //     if (!existingRecruiter) {
-  //       const newRecruiter = {
-  //         userId: userId,
-  //         cvId: cvId,
-  //         appliedJobIds: appliedJobIds,
-  //         testResult: testResult
-  //       };
-
-  //       const recruiter = await this.recruiterRepository.create(newRecruiter) as RecruiterDocument;
-
-  //       return recruiter;
-  //     }
-
-  //     const updatedRecruiter = await this.recruiterRepository.findOneAndUpdate(
-  //       { userId: userId },
-  //       {
-  //         $set: {
-  //           cvId: cvId,
-  //           appliedJobIds: appliedJobIds,
-  //           testResult: testResult
-  //         }
-  //       },
-  //       { new: true, upsert: false },
-  //       false
-  //     ) as RecruiterDocument;
-
-  //     return updatedRecruiter;
-  //   } catch (error) {
-  //     throw new HttpException("createRecruiter error", HttpStatus.INTERNAL_SERVER_ERROR, {
-  //       cause: error
-  //     });
-  //   }
-  // }
+  async updateRecruiter(request: { userId: string, data: UpdateRecruiterDto }): Promise<ResponseType> {
+    const { userId, data } = request;
+  
+      try {  
+        const updatedRecruiter = await this.recruiterRepository.findOneAndUpdate(
+          { userId: userId },
+          {
+            $set: {
+              position: data.position,
+              companyName: data.companyName,
+              companyWebsite: data.companyWebsite,
+            }
+          },
+          { new: true, upsert: false }
+        ) as RecruiterDocument;
+  
+        return {
+          code: CodeResponseEnum.SUCCESS,
+          data: updatedRecruiter
+        };
+      } catch (error) {
+        throw new HttpException("createOrUpdateRecruiter error", HttpStatus.INTERNAL_SERVER_ERROR, {
+          cause: error
+        });
+      }
+    }
 }

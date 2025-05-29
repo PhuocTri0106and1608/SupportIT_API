@@ -16,13 +16,13 @@ import { IAuthPayload } from "@modules/auth/interfaces";
 @ApiTags("CVs")
 @ApiBearerAuth("access-token")
 @UseGuards(AuthGuard, AnyRoleGuard)
-@AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
 export class CVController {
   constructor(
     private readonly cvService: CVService,
     private readonly mediaService: MediaService
   ) { }
   @Post('uploadJD')
+  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   async uploadJD(
     @CurrentUser() user: IAuthPayload,
     @Body() jd: CreateJdDto
@@ -31,6 +31,7 @@ export class CVController {
   }
 
   @Post('uploadCV')
+  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   async uploadCV(
     @CurrentUser() user,
     @Body() cv: CVUploadDto
@@ -49,11 +50,13 @@ export class CVController {
   }
 
   @Post("reviewCV/:cvId/:jdId")
+  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   async reviewCV(@CurrentUser() user, @Param("cvId") cvId: string, @Param("jdId") jdId: string): Promise<ResponseType> {
     return this.cvService.reviewCV({ userId: user.id, cvId, jdId });
   }
 
   @Post("applyCV/:cvId/:jdId")
+  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   async applyCV(@CurrentUser() user, @Param("cvId") cvId: string, @Param("jdId") jdId: string): Promise<ResponseType> {
     return this.cvService.applyCV({ userId: user.id, cvId, jdId });
   }
@@ -108,12 +111,14 @@ export class CVController {
 
   // Endpoint để xóa JD theo ID
   @Delete('delete-jd/:id')
+  @AnyRole(LoginRoleEnum.RECRUITER)
   async deleteJD(@Param('id') id: string): Promise<ResponseType> {
     return this.cvService.deleteJD(id);
   }
 
   // Endpoint để xóa CV theo ID
   @Delete('delete-cv/:id')
+  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   async deleteCV(@Param('id') id: string): Promise<ResponseType> {
     return this.cvService.deleteCV(id);
   }
@@ -123,6 +128,7 @@ export class CVController {
     type: UploadFileDto,
   })
   @UseInterceptors(FileInterceptor('file'))
+  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   @Post('uploadFile')
   @ApiOkResponse({
     description: 'Upload file to Cloudinary',
@@ -151,6 +157,7 @@ export class CVController {
   @ApiBody({
     type: UploadFileDto,
   })
+  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   @UseInterceptors(FileInterceptor('file'))
   @Post('uploadImage')
   @ApiOkResponse({
@@ -177,6 +184,7 @@ export class CVController {
   }
 
   @Delete('deleteFile')
+  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   @ApiOkResponse({ type: ResponseType })
   async deleteFile(@Body() body: DeleteFileDto): Promise<ResponseType> {
     return this.mediaService.deleteFileFromPublicBucket(body.key);

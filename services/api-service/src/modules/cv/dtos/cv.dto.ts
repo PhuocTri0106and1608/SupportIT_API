@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsIn, IsObject, IsOptional, IsString, ValidateNested, } from 'class-validator';
-import { BaseInformation } from '../schemas';
 import { Type } from 'class-transformer';
+import { BaseInformationDto } from '@common/dtos';
 
 export class CVDto {
   @ApiProperty()
@@ -22,48 +22,6 @@ export class CVUploadDto {
   @IsString()
   @ApiPropertyOptional()
   fileName?: string;
-}
-
-
-export class BaseInformationDto {
-  @IsArray()
-  @ApiProperty()
-  @IsString({ each: true })
-  experience: string[];
-
-  @IsArray()
-  @ApiProperty()
-  @IsString({ each: true })
-  skills: string[];
-
-  @IsOptional()
-  @ApiPropertyOptional()
-  @IsArray()
-  @IsString({ each: true })
-  education?: string[];
-
-  @IsOptional()
-  @IsArray()
-  @ApiPropertyOptional()
-  @IsString({ each: true })
-  projects?: string[];
-
-  @IsOptional()
-  @ApiPropertyOptional()
-  @IsString()
-  summary?: string;
-
-  @IsOptional()
-  @ApiPropertyOptional()
-  @IsArray()
-  @IsString({ each: true })
-  certifications?: string[];
-
-  @IsOptional()
-  @ApiPropertyOptional()
-  @IsArray()
-  @IsString({ each: true })
-  languages?: string[];
 }
 
 export class CreateJdDto {

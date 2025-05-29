@@ -1,9 +1,7 @@
-import { CodeResponseEnum, LoginRoleEnum } from "@common/enums";
-import { IAuthPayload } from "@modules/auth/interfaces";
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { CandidateRepository } from "./repositories";
 import { CandidateDocument } from "./schemas";
-import { CandidateDto } from "./dtos";
+import { BaseInformationDto } from "@common/dtos";
 
 @Injectable()
 export class CandidateService {
@@ -12,18 +10,16 @@ export class CandidateService {
     private readonly candidateRepository: CandidateRepository
   ) { }
 
-  async createOrUpdateCandidate(request: CandidateDto): Promise<CandidateDocument> {
-    const { userId, cvId, appliedJobIds, testResult } = request;
+  async createOrUpdateCandidate(request: { userId: string, information: BaseInformationDto }): Promise<CandidateDocument> {
+    const { userId, information } = request;
 
     try {
-      const existingCandidate = await this.candidateRepository.findOne({ userId: userId }, false);
+      const existingCandidate = await this.candidateRepository.findOne({ userId: userId });
 
       if (!existingCandidate) {
         const newCandidate = {
           userId: userId,
-          cvId: cvId,
-          appliedJobIds: appliedJobIds,
-          testResult: testResult
+          information
         };
 
         const candidate = await this.candidateRepository.create(newCandidate) as CandidateDocument;
@@ -35,9 +31,7 @@ export class CandidateService {
         { userId: userId },
         {
           $set: {
-            cvId: cvId,
-            appliedJobIds: appliedJobIds,
-            testResult: testResult
+            information
           }
         },
         { new: true, upsert: false },
@@ -46,7 +40,7 @@ export class CandidateService {
 
       return updatedCandidate;
     } catch (error) {
-      throw new HttpException("createCandidate error", HttpStatus.INTERNAL_SERVER_ERROR, {
+      throw new HttpException("createOrUpdateCandidate error", HttpStatus.INTERNAL_SERVER_ERROR, {
         cause: error
       });
     }

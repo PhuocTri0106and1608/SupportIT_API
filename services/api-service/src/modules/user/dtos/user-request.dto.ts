@@ -19,6 +19,11 @@ export class CreateUserRequestDto {
     avatar: string;
 }
 
+export class UpdateAvatarRequestDto {
+    @ApiProperty()
+    @IsString()
+    avatar: string;
+}
 export class UpdateUserDto {
     @IsString()
     @Length(3, 106)
