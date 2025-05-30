@@ -98,7 +98,7 @@ export class UserController {
         )
         file: Express.Multer.File,
     ): Promise<ResponseType<{ imageUrl: string; publicId: string }>> {
-        return this.mediaService.uploadFileToPublicBucket('support-it/images', {
+        return this.mediaService.uploadFileToPublicBucket('support-it/avatars', {
             file: file,
             fileName: file.originalname,
         });
