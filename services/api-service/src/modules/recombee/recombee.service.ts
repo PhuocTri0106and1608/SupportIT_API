@@ -5,6 +5,7 @@ import { CVDocument, EvaluationDocument, JDDocument } from '@modules/cv/schemas'
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { AddItem, SetItemValues, AddDetailView, AddPurchase, AddRating, RecommendItemsToItem, RecommendItemsToUser, ListItems, SetUserValues, ListUsers, RecommendUsersToUser, AddUserProperty, AddItemProperty } from 'recombee-api-client/lib/requests';
 import { ApiClient } from 'recombee-api-client';
+import { CandidateDocument } from '@modules/candidate/schemas';
 
 
 @Injectable()
@@ -71,7 +72,7 @@ export class RecombeeService {
       new SetItemValues(cv._id.toString(), {
         candidateId: cv.candidateId,
         position: cv.position,
-        skills: cv.information?.skills || [],
+        skills: (cv.information?.skills || []).map(skill => skill.toLowerCase()) || [],
         experience: cv.information?.experience || [],
         education: cv.information?.education || [],
         projects: cv.information?.projects || [],
@@ -95,7 +96,7 @@ export class RecombeeService {
         position: jd.position,
         companyName: jd.companyName || '',
         location: jd.location || '',
-        skills: jd.requirements.skills || [],
+        skills: (jd.requirements.skills || []).map(skill => skill.toLowerCase()) || [],
         experience: jd.requirements.experience || [],
         education: jd.requirements.education || [],
         benefits: jd.benefits || [],
@@ -129,11 +130,30 @@ export class RecombeeService {
     await this.client.send(request);
   }
 
+  async addCandidate(candidate: CandidateDocument) {
+    try {
+      const userValues = {
+        skills: (candidate.information.skills || []).map(skill => skill.toLowerCase()) || [],
+        experience: candidate.information.experience || [],
+        isJobIdeal: false,
+      };
+
+
+      await this.client.send(
+        new SetUserValues(candidate._id.toString(), userValues, { cascadeCreate: true }),
+      );
+      console.log(`User ${candidate._id.toString()} added/updated in Recombee`);
+    } catch (error) {
+      console.error(`Error adding/updating user ${candidate._id.toString()} in Recombee:`, error);
+      throw error;
+    }
+  }
+
   async createJobIdealCandidate(jdId: string) {
     try {
       const jd = await this.jdRepository.findById(jdId);
       const userValues = {
-        skills: jd.requirements.skills || [],
+        skills: (jd.requirements.skills || []).map(skill => skill.toLowerCase()) || [],
         experience: jd.requirements.experience || [],
         position: jd.position || '',
         location: jd.location || '',
@@ -218,7 +238,7 @@ export class RecombeeService {
       const candidate = await this.candidateRepository.findById(candidateId);
       const boosters = [];
       if (candidate?.skills?.length) {
-        boosters.push(`(if ('skills' in ${JSON.stringify(candidate.skills)}) then 1.5 else 1)`);
+        boosters.push(`(if ('skills' in ${JSON.stringify((candidate.skills || []).map(skill => skill.toLowerCase()) || [])} then 1.5 else 1)`);
       }
       const booster = boosters.length > 0 ? boosters.join(' * ') : 'similarity_score * 0.4 + match_percent * 0.6';
 
