@@ -26,9 +26,10 @@ export class UserController {
     @UseGuards(AuthGuard, AnyRoleGuard)
     @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
     async getProfile(@CurrentUser() user: IAuthPayload) {
+        const response = await this.userService.getProfile(user);
         return {
             code: CodeResponseEnum.SUCCESS,
-            data: this.userService.getProfile(user)
+            data: response
         };
     }
 
