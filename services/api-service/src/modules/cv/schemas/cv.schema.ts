@@ -12,6 +12,9 @@ export class CV extends BaseSchema {
   candidateId: string;
 
   @Prop({ required: true })
+  position: string;
+
+  @Prop({ required: true })
   fileUrl: string;
 
   @Prop()

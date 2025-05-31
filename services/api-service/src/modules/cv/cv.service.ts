@@ -66,10 +66,21 @@ export class CVService {
 
       const createdCV = await this.CVRepository.create({
         candidateId: candidate._id,
+        position: cv.position,
         fileUrl: cv.fileUrl,
         fileName: cv.fileName,
         information: extractCVResponse,
       });
+
+      if (!candidate?.infomation) {
+        this.candidateRepository.findOneAndUpdate(
+          { _id: candidate._id },
+          {
+            set: {
+              infomation: extractCVResponse
+            }
+          })
+      }
 
       await this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 });
 

@@ -3,17 +3,11 @@ import { IsArray, IsEnum, IsIn, IsObject, IsOptional, IsString, ValidateNested, 
 import { Type } from 'class-transformer';
 import { BaseInformationDto } from '@common/dtos';
 
-export class CVDto {
-  @ApiProperty()
-  @IsString()
-  fileUrl: string;
-
-  @ApiProperty()
-  @IsString()
-  jobDescription: string;
-}
-
 export class CVUploadDto {
+  @IsString()
+  @ApiProperty()
+  position: string;
+
   @IsString()
   @ApiProperty()
   fileUrl: string;
