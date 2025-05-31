@@ -1,6 +1,5 @@
 import { CodeResponseEnum, LoginRoleEnum } from "@common/enums";
-import { IAuthPayload } from "@modules/auth/interfaces";
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { ApplicationRepository, CVRepository, EvaluationRepository, JDRepository } from "./repositories";
 import { CV, CVDocument, JD, JDDocument } from "./schemas";
 import { CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, CreateJdDto } from "./dtos";
@@ -10,7 +9,7 @@ import { CandidateRepository } from "@modules/candidate/repositories";
 import { Types } from "mongoose";
 import { env } from "@environments";
 import { RedisService } from "@modules/redis";
-import { logger } from "@modules/logger";
+import { RecombeeService } from "@modules/recombee/recombee.service";
 @Injectable()
 export class CVService {
 
@@ -20,6 +19,8 @@ export class CVService {
     private readonly evaluationRepository: EvaluationRepository,
     private readonly applicationRepository: ApplicationRepository,
     private readonly candidateRepository: CandidateRepository,
+    @Inject(forwardRef(() => RecombeeService))
+    private readonly recombeeService: RecombeeService,
     private readonly redisService: RedisService,
   ) { }
 
@@ -33,7 +34,9 @@ export class CVService {
         verified: isRecruiter
       });
 
-      await this.redisService.set(`jd:${createdJD._id}`, createdJD, { ttl: 3600 });
+      this.redisService.set(`jd:${createdJD._id}`, createdJD, { ttl: 3600 });
+      this.recombeeService.addJD(createdJD as JDDocument);
+      this.recombeeService.createJobIdealCandidate(createdJD._id.toString());
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -82,7 +85,8 @@ export class CVService {
           })
       }
 
-      await this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 });
+      this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 });
+      this.recombeeService.addCV(createdCV as CVDocument);
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -168,6 +172,7 @@ export class CVService {
         reviewCVResponse,
       });
 
+      this.recombeeService.addEvaluation(evaluation as any);
       this.applicationRepository.create({
         candidateId: candidate._id,
         cvId,
@@ -175,6 +180,11 @@ export class CVService {
         evaluationId: evaluation._id.toString(),
         status: "pending",
       });
+      this.recombeeService.addInteraction(
+        candidate._id.toString(),
+        jd._id.toString(),
+        "apply"
+      );
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -259,6 +269,12 @@ export class CVService {
         reviewCVResponse,
       });
 
+      this.recombeeService.addEvaluation(evaluation as any);
+      // this.recombeeService.addInteraction(
+      //   candidate._id.toString(),
+      //   jd._id.toString(),
+      //   "apply"
+      // );
       return {
         code: CodeResponseEnum.SUCCESS,
         data: evaluation,

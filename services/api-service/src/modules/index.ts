@@ -18,3 +18,4 @@ export * from "./recruiter/recruiter.module";
 export * from './leetcode/leetcode.module';
 export * from './judge/judge.module';
 export * from './test-set/test-set.module';
+export * from './recombee/recombee.module';

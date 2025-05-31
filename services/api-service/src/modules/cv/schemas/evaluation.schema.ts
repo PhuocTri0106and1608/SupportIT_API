@@ -38,6 +38,9 @@ class Summary {
   fit_level: string;
 
   @IsNumber()
+  overall_score: number;
+
+  @IsNumber()
   similarity_score: number;
 }
 

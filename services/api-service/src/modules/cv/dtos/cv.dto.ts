@@ -25,6 +25,10 @@ export class CreateJdDto {
 
   @IsString()
   @ApiProperty()
+  position: string;
+
+  @IsString()
+  @ApiProperty()
   description: string;
 
   @IsOptional()

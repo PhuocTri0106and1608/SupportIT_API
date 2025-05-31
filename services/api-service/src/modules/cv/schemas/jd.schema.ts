@@ -15,6 +15,9 @@ export class JD extends BaseSchema {
   title: string;
 
   @Prop({ required: true })
+  position: string;
+
+  @Prop({ required: true })
   description: string;
 
   @Prop()

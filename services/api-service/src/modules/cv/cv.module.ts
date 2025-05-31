@@ -1,5 +1,5 @@
 import { RedisModule } from "@modules/redis";
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ApplicationRepository, CVRepository, EvaluationRepository, JDRepository } from "./repositories";
 import { Application, ApplicationSchema, CV, CVSchema, Evaluation, EvaluationSchema, JD, JDSchema } from "./schemas";
@@ -7,6 +7,7 @@ import { CVController } from "./cv.controller";
 import { CVService } from "./cv.service";
 import { CandidateModule } from "@modules/candidate/candidate.module";
 import { MediaModule } from "@modules/media/media.module";
+import { RecombeeModule } from "@modules/recombee/recombee.module";
 
 @Module({
   imports: [
@@ -14,7 +15,9 @@ import { MediaModule } from "@modules/media/media.module";
     MongooseModule.forFeature([{ name: Evaluation.name, schema: EvaluationSchema }]), MongooseModule.forFeature([{ name: JD.name, schema: JDSchema }]),
     RedisModule,
     CandidateModule,
-    MediaModule],
+    MediaModule,
+    forwardRef(() => RecombeeModule)
+  ],
   providers: [CVService, CVRepository, ApplicationRepository, EvaluationRepository, JDRepository],
   exports: [CVService, CVRepository, JDRepository, EvaluationRepository, ApplicationRepository],
   controllers: [CVController]
