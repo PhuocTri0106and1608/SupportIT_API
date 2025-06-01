@@ -68,7 +68,7 @@ export class CVService {
       const extractCVResponse = response.data;
 
       const createdCV = await this.CVRepository.create({
-        candidateId: candidate._id,
+        candidateId: userId,
         position: cv.position,
         fileUrl: cv.fileUrl,
         fileName: cv.fileName,
@@ -168,7 +168,7 @@ export class CVService {
 
       // Create Evaluation
       const evaluation = await this.evaluationRepository.create({
-        candidateId: candidate._id,
+        candidateId: userId,
         cvId,
         jdId,
         reviewCVResponse,
@@ -176,14 +176,14 @@ export class CVService {
 
       this.recombeeService.addEvaluation(evaluation as any);
       this.applicationRepository.create({
-        candidateId: candidate._id,
+        candidateId: userId,
         cvId,
         jdId,
         evaluationId: evaluation._id.toString(),
         status: "pending",
       });
       this.recombeeService.addInteraction(
-        candidate._id.toString(),
+        userId,
         jd._id.toString(),
         "apply"
       );
@@ -266,7 +266,7 @@ export class CVService {
 
       // Create Evaluation
       const evaluation = await this.evaluationRepository.create({
-        candidateId: candidate._id,
+        candidateId: userId,
         cvId,
         jdId,
         reviewCVResponse,
