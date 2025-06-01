@@ -1,5 +1,6 @@
 import { PageOptionsDto } from "@common/dtos";
 import { ApiPropertyOptional } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
 import { IsOptional, IsString, IsEnum, IsBoolean } from "class-validator";
 
 export class FilterApplicationsRequestDto extends PageOptionsDto {
@@ -90,6 +91,7 @@ export class FilterJDsRequestDto extends PageOptionsDto {
   visibility?: 'private' | 'public';
 
   @ApiPropertyOptional({ example: true })
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   @IsOptional()
   verified?: boolean;

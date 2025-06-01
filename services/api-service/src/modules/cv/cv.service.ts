@@ -132,6 +132,7 @@ export class CVService {
       // Call Flask API to evaluate CV against JD
       const response = await axios.post(`${env.flask.REVIEW_CV_URL}`, {
         cv: {
+          position: cv.position,
           experience: cv.information.experience || [],
           skills: cv.information.skills || [],
           education: cv.information.education || [],
@@ -142,6 +143,7 @@ export class CVService {
         jd: {
           title: jd.title,
           description: jd.description,
+          position: jd.position,
           requirements: {
             experience: jd.requirements.experience || [],
             skills: jd.requirements.skills || [],
@@ -154,7 +156,6 @@ export class CVService {
           benefits: jd.benefits || [],
           companyName: jd.companyName || '',
           location: jd.location || '',
-          visibility: jd.visibility || 'private',
         },
       });
 
@@ -229,6 +230,7 @@ export class CVService {
       // Call Flask API to evaluate CV against JD
       const response = await axios.post(`${env.flask.REVIEW_CV_URL}`, {
         cv: {
+          position: cv.position,
           experience: cv.information.experience || [],
           skills: cv.information.skills || [],
           education: cv.information.education || [],
@@ -239,6 +241,7 @@ export class CVService {
         jd: {
           title: jd.title,
           description: jd.description,
+          position: jd.position,
           requirements: {
             experience: jd.requirements.experience || [],
             skills: jd.requirements.skills || [],
@@ -251,7 +254,6 @@ export class CVService {
           benefits: jd.benefits || [],
           companyName: jd.companyName || '',
           location: jd.location || '',
-          visibility: jd.visibility || 'private',
         },
       });
 
@@ -390,7 +392,7 @@ export class CVService {
     }
   }
   async getListJDs(query: FilterJDsRequestDto): Promise<ResponseType> {
-    const { page = 1, limit = 10, creatorUserId, title, companyName, location, visibility, skill } = query;
+    const { page = 1, limit = 10, creatorUserId, title, companyName, location, visibility, skill, verified } = query;
     const skip = (page - 1) * limit;
 
     try {
@@ -400,6 +402,7 @@ export class CVService {
       if (companyName) filter.companyName = { $regex: companyName, $options: "i" };
       if (location) filter.location = { $regex: location, $options: "i" };
       if (visibility) filter.visibility = visibility;
+      if (verified) filter.verified = verified;
       if (skill) filter['requirements.skills'] = { $in: [skill] };
 
       const cacheKey = `jds:list:page=${page}:limit=${limit}:${JSON.stringify(query)}`;
