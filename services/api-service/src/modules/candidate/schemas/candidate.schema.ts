@@ -10,6 +10,9 @@ export class Candidate extends BaseSchema {
   @Prop({ type: String, required: true })
   userId: string;
 
+  @Prop({ type: String })
+  position?: string;
+
   @Prop({ type: BaseInformation })
   @Type(() => BaseInformation)
   information?: BaseInformation;

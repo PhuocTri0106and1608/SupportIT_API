@@ -80,6 +80,7 @@ export class CVService {
           { _id: candidate._id },
           {
             set: {
+              position: cv.position,
               infomation: extractCVResponse
             }
           })

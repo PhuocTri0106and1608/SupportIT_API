@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { CandidateRepository } from "./repositories";
 import { CandidateDocument } from "./schemas";
 import { BaseInformationDto } from "@common/dtos";
+import { UpdateCandidateDto } from "./dtos";
 
 @Injectable()
 export class CandidateService {
@@ -10,8 +11,9 @@ export class CandidateService {
     private readonly candidateRepository: CandidateRepository
   ) { }
 
-  async createOrUpdateCandidate(request: { userId: string, information: BaseInformationDto }): Promise<CandidateDocument> {
-    const { userId, information } = request;
+  async createOrUpdateCandidate(request: { userId: string, data: UpdateCandidateDto }): Promise<CandidateDocument> {
+    const { userId, data } = request;
+    const { position, ...information } = data;
 
     try {
       const existingCandidate = await this.candidateRepository.findOne({ userId: userId });
@@ -19,6 +21,7 @@ export class CandidateService {
       if (!existingCandidate) {
         const newCandidate = {
           userId: userId,
+          position: position || '',
           information
         };
 

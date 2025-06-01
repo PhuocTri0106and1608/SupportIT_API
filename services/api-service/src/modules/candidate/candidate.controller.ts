@@ -6,6 +6,7 @@ import { CandidateService } from "./candidate.service";
 import { AnyRoleGuard } from "@modules/auth/guards";
 import { CodeResponseEnum, LoginRoleEnum } from "@common/enums";
 import { BaseInformationDto, ResponseType } from "@common/dtos";
+import { UpdateCandidateDto } from "./dtos";
 
 @Controller("candidates")
 @ApiTags("Candidates")
@@ -18,12 +19,12 @@ export class CandidateController {
   @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)
-  async createOrUpdateCandidate(@CurrentUser("id") candidateId: string, @Body() body: BaseInformationDto): Promise<ResponseType> {
+  async createOrUpdateCandidate(@CurrentUser("id") candidateId: string, @Body() body: UpdateCandidateDto): Promise<ResponseType> {
     return {
       code: CodeResponseEnum.SUCCESS,
       data: this.candidateService.createOrUpdateCandidate({
         userId: candidateId,
-        information: body
+        data: body
       })
     }
   }
