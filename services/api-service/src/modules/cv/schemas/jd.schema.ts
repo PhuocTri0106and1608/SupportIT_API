@@ -37,7 +37,7 @@ export class JD extends BaseSchema {
   visibility?: "private" | "public";
 
   @Prop({ required: true, default: false })
-  verified: string;
+  verified: boolean;
 }
 
 export const JDSchema = SchemaFactory.createForClass(JD);
