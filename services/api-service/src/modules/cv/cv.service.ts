@@ -1,7 +1,7 @@
 import { CodeResponseEnum, LoginRoleEnum } from "@common/enums";
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { ApplicationRepository, CVRepository, EvaluationRepository, JDRepository } from "./repositories";
-import { CV, CVDocument, JD, JDDocument } from "./schemas";
+import { CV, CVDocument, EvaluationDocument, JD, JDDocument } from "./schemas";
 import { CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, CreateJdDto } from "./dtos";
 import axios from "axios";
 import { ResponseType } from "@common/dtos";
@@ -34,9 +34,13 @@ export class CVService {
         verified: isRecruiter
       });
 
-      this.redisService.set(`jd:${createdJD._id}`, createdJD, { ttl: 3600 });
-      this.recombeeService.addJD(createdJD as JDDocument);
-      this.recombeeService.createJobIdealCandidate(createdJD._id.toString());
+      await this.redisService.set(`jd:${createdJD._id}`, createdJD, { ttl: 3600 });
+      if (isRecruiter && jd.visibility === "public") {
+        await Promise.all([
+          this.recombeeService.addJD(createdJD as JDDocument),
+          this.recombeeService.createJobIdealCandidate(createdJD._id.toString())
+        ]);
+      }
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -75,7 +79,7 @@ export class CVService {
         information: extractCVResponse,
       });
 
-      if (!candidate?.infomation) {
+      await Promise.all([
         this.candidateRepository.findOneAndUpdate(
           { _id: candidate._id },
           {
@@ -83,11 +87,10 @@ export class CVService {
               position: cv.position,
               infomation: extractCVResponse
             }
-          })
-      }
-
-      this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 });
-      this.recombeeService.addCV(createdCV as CVDocument);
+          }),
+        this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 }),
+        this.recombeeService.addCV(createdCV as CVDocument)
+      ]);
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -174,19 +177,22 @@ export class CVService {
         reviewCVResponse,
       });
 
-      this.recombeeService.addEvaluation(evaluation as any);
-      this.applicationRepository.create({
-        candidateId: userId,
-        cvId,
-        jdId,
-        evaluationId: evaluation._id.toString(),
-        status: "pending",
-      });
-      this.recombeeService.addInteraction(
-        userId,
-        jd._id.toString(),
-        "apply"
-      );
+      await Promise.all([
+        this.recombeeService.addEvaluation(evaluation as EvaluationDocument),
+        this.recombeeService.addCandidate(candidate),
+        this.applicationRepository.create({
+          candidateId: userId,
+          cvId,
+          jdId,
+          evaluationId: evaluation._id.toString(),
+          status: "pending",
+        }),
+        this.recombeeService.addInteraction(
+          userId,
+          jd._id.toString(),
+          "apply"
+        )
+      ]);
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -272,9 +278,12 @@ export class CVService {
         reviewCVResponse,
       });
 
-      this.recombeeService.addEvaluation(evaluation as any);
+      await Promise.all([
+        this.recombeeService.addEvaluation(evaluation as EvaluationDocument),
+        this.recombeeService.addCandidate(candidate)
+      ]);
       // this.recombeeService.addInteraction(
-      //   candidate._id.toString(),
+      //   userId,
       //   jd._id.toString(),
       //   "apply"
       // );
@@ -577,7 +586,14 @@ export class CVService {
 
       // Xóa cache liên quan
       const cachePattern = 'applications:list:*';
-      await this.redisService.deleteByPattern(cachePattern);
+      await Promise.all([
+        this.redisService.deleteByPattern(cachePattern),
+        this.recombeeService.addInteraction(
+          application.candidateId,
+          jd._id.toString(),
+          status
+        )
+      ]);
 
       return {
         code: CodeResponseEnum.SUCCESS,

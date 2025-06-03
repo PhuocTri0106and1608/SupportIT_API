@@ -106,17 +106,20 @@ export class UserService {
                 };
 
                 const user = await this.userRepository.create(newUser) as UserDocument;
-
                 // Nếu là candidate thì tạo candidate profile
                 if (role === LoginRoleEnum.CANDIDATE) {
                     await this.candidateRepository.create({ userId: user._id.toString() });
                 }
-
                 if (email) {
                     this.userEmailBloomFilter.add(email.toLowerCase());
                 }
 
                 return user;
+            }
+
+            // Nếu là candidate thì tạo candidate profile
+            if (role === LoginRoleEnum.CANDIDATE && !existingUser.roles.includes(LoginRoleEnum.CANDIDATE)) {
+                await this.candidateRepository.create({ userId: existingUser._id.toString() });
             }
 
             // Nếu user đã tồn tại, cập nhật thông tin

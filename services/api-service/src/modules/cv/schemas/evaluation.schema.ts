@@ -34,9 +34,6 @@ class SkillsAnalysis {
 }
 
 class Summary {
-  @IsString()
-  fit_level: string;
-
   @IsNumber()
   overall_score: number;
 

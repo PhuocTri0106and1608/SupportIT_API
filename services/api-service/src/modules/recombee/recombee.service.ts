@@ -3,7 +3,7 @@ import { CandidateRepository } from '@modules/candidate/repositories';
 import { JDRepository } from '@modules/cv/repositories';
 import { CVDocument, EvaluationDocument, JDDocument } from '@modules/cv/schemas';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { AddItem, SetItemValues, AddDetailView, AddPurchase, AddRating, RecommendItemsToItem, RecommendItemsToUser, ListItems, SetUserValues, ListUsers, RecommendUsersToUser, AddUserProperty, AddItemProperty } from 'recombee-api-client/lib/requests';
+import { AddItem, SetItemValues, AddDetailView, AddPurchase, AddRating, RecommendItemsToItem, RecommendItemsToUser, ListItems, SetUserValues, ListUsers, RecommendUsersToUser, AddUserProperty, AddItemProperty, AddBookmark } from 'recombee-api-client/lib/requests';
 import { ApiClient } from 'recombee-api-client';
 import { CandidateDocument } from '@modules/candidate/schemas';
 
@@ -102,25 +102,42 @@ export class RecombeeService {
         benefits: jd.benefits || [],
         type: 'jd',
         visibility: jd.visibility || 'private',
-        verified: true, // Giả sử JD đã được xác minh
+        verified: jd.verified
       }, { cascadeCreate: true }),
     );
   }
 
   // Thêm tương tác (interaction)
   async addInteraction(userId: string, itemId: string, interactionType: string) {
-    const request = new AddDetailView(userId, itemId, { timestamp: new Date().toISOString() });
-    if (interactionType === 'apply') {
-      const applyRequest = new AddPurchase(userId, itemId, { timestamp: new Date().toISOString() });
-      await this.client.send(applyRequest);
-    } else {
-      await this.client.send(request);
+    const timestamp = new Date().toISOString();
+
+    switch (interactionType) {
+      case 'apply':
+        await this.client.send(new AddPurchase(userId, itemId, { timestamp }));
+        break;
+      case 'shortlisted':
+        await this.client.send(new AddBookmark(userId, itemId, { timestamp }));
+        break;
+      case 'accepted':
+        await this.client.send(new AddPurchase(userId, itemId, {
+          timestamp,
+          rating: 1 // Positive interaction
+        }));
+        break;
+      case 'rejected':
+        await this.client.send(new AddPurchase(userId, itemId, {
+          timestamp,
+          rating: -1 // Negative interaction
+        }));
+        break;
+      default:
+        await this.client.send(new AddDetailView(userId, itemId, { timestamp }));
     }
   }
 
   // Thêm đánh giá từ Evaluation
   async addEvaluation(evaluation: EvaluationDocument) {
-    const rating = evaluation.reviewCVResponse.summary.similarity_score;
+    const rating = (evaluation.reviewCVResponse.summary.overall_score / 50) - 1; // Chuyển đổi overall_score (0-100) thành rating (-1 đến 1)
     const request = new AddRating(
       evaluation.candidateId,
       evaluation.jdId,
@@ -133,16 +150,16 @@ export class RecombeeService {
   async addCandidate(candidate: CandidateDocument) {
     try {
       const userValues = {
-        skills: (candidate.information.skills || []).map(skill => skill.toLowerCase()) || [],
-        experience: candidate.information.experience || [],
+        skills: (candidate.information?.skills || []).map(skill => skill.toLowerCase()) || [],
+        experience: candidate.information?.experience || [],
         isJobIdeal: false,
       };
 
 
       await this.client.send(
-        new SetUserValues(candidate._id.toString(), userValues, { cascadeCreate: true }),
+        new SetUserValues(candidate.userId, userValues, { cascadeCreate: true }),
       );
-      console.log(`User ${candidate._id.toString()} added/updated in Recombee`);
+      console.log(`User ${candidate.userId} added/updated in Recombee`);
     } catch (error) {
       console.error(`Error adding/updating user ${candidate._id.toString()} in Recombee:`, error);
       throw error;
@@ -176,8 +193,7 @@ export class RecombeeService {
         diversity: 0.5,
         rotationTime: 0.0,
         rotationRate: 0.0,
-        page,
-        booster: 'similarity_score * 0.4 + match_percent * 0.6',
+        offset: (page - 1) * limit
       });
       const response = await this.client.send(request);
       let userIds = response.recomms.map((r) => r.id);
@@ -186,8 +202,7 @@ export class RecombeeService {
       if (userIds.length === 0) {
         const fallbackRequest = new ListUsers({
           returnProperties: true,
-          page,
-          limit,
+          offset: (page - 1) * limit,
         });
         const fallbackResponse = await this.client.send(fallbackRequest);
         userIds = fallbackResponse.items.map((item) => item.userId);
@@ -203,23 +218,44 @@ export class RecombeeService {
   // Gợi ý CV cho JD
   async recommendCVsForJD(jdId: string, limit: number = 10, page: number = 1) {
     try {
-      const request = new RecommendItemsToItem(jdId, 'cv', limit, {
-        scenario: 'jd-to-cv',
-        booster: 'similarity_score * 0.4 + match_percent * 0.6',
-        returnProperties: true,
-        filter: "'type' == \"cv\"",
-        page,
-      });
+      const jd = await this.jdRepository.findById(jdId);
+      if (!jd) {
+        throw new Error('JD not found for recommendation');
+      }
+
+      const jdSkills = (jd.requirements.skills || []).map(s => s.toLowerCase());
+      const jdPosition = jd.position?.toLowerCase();
+
+      let boosterParts: string[] = [];
+      if (jdSkills.length > 0) {
+        boosterParts.push(`sum(map(${JSON.stringify(jdSkills)}, jd_skill -> if (item['skills'] != null and contains(item['skills'], jd_skill)) then 1.0 else 0.0)) * 0.7`);
+      }
+
+      if (jdPosition) {
+        boosterParts.push(`(if item['position'] != null and item['position'] == "${jdPosition}" then 1.5 else 1.0)`);
+      }
+
+      const request = new RecommendItemsToItem(
+        jdId, // Item (JD) mà chúng ta đang tìm gợi ý CV cho nó
+        jdId, // Ngữ cảnh người dùng (sử dụng chính JD làm ngữ cảnh)
+        limit,
+        {
+          scenario: 'jd-to-cv-similarity',
+          filter: "'type' == \"cv\"", // Chỉ lấy các item là CV
+          returnProperties: true,
+          booster: boosterParts.length > 0 ? boosterParts.join(' * ') : undefined, // Quan trọng
+          offset: (page - 1) * limit,
+        }
+      );
       const response = await this.client.send(request);
-      let cvIds = response.recomms.map((r) => r.id);
+      let cvIds = response.recomms.map((r: any) => r.id);
 
       // Fallback nếu không có gợi ý
       if (cvIds.length === 0) {
         const fallbackRequest = new ListItems({
           returnProperties: true,
           filter: "'type' == \"cv\"",
-          page,
-          limit,
+          offset: (page - 1) * limit
         });
         const fallbackResponse = await this.client.send(fallbackRequest);
         cvIds = fallbackResponse.items.map((item) => item.itemId);
@@ -236,18 +272,20 @@ export class RecombeeService {
   async recommendJDsForCandidate(candidateId: string, limit: number = 10, page: number = 1) {
     try {
       const candidate = await this.candidateRepository.findById(candidateId);
-      const boosters = [];
-      if (candidate?.skills?.length) {
-        boosters.push(`(if ('skills' in ${JSON.stringify((candidate.skills || []).map(skill => skill.toLowerCase()) || [])} then 1.5 else 1)`);
+      const candidateSkills = (candidate?.information?.skills || []).map(skill => skill.toLowerCase());
+      let boosterString: string | undefined;
+      if (candidateSkills.length > 0) {
+        // Đếm số lượng skill của JD (item['skills']) có trong danh sách candidateSkills
+        boosterString = `sum(map(item['skills'], jd_skill -> if (${JSON.stringify(candidateSkills)}.indexOf(jd_skill) > -1) then 1.0 else 0.0)) * 0.6`;
+      // Ví dụ: Nếu JD có 3 skills khớp với candidate, điểm boost sẽ là 3 * 0.6 = 1.8
       }
-      const booster = boosters.length > 0 ? boosters.join(' * ') : 'similarity_score * 0.4 + match_percent * 0.6';
 
       const request = new RecommendItemsToUser(candidateId, limit, {
         scenario: 'candidate-to-jd',
-        booster,
+        booster: boosterString,
         filter: "'type' == \"jd\" and 'visibility' == \"public\" and 'verified' == true",
         returnProperties: true,
-        page,
+        offset: (page - 1) * limit
       });
       const response = await this.client.send(request);
       let jdIds = response.recomms.map((r) => r.id);
@@ -257,8 +295,7 @@ export class RecombeeService {
         const fallbackRequest = new ListItems({
           returnProperties: true,
           filter: "'type' == \"jd\" and 'visibility' == \"public\" and 'verified' == true",
-          page,
-          limit,
+          offset: (page - 1) * limit
         });
         const fallbackResponse = await this.client.send(fallbackRequest);
         jdIds = fallbackResponse.items.map((item) => item.itemId);
