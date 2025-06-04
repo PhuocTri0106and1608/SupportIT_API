@@ -81,7 +81,7 @@ export class CVService {
 
       await Promise.all([
         this.candidateRepository.findOneAndUpdate(
-          { _id: candidate._id },
+          { userId: candidate.userId },
           {
             set: {
               position: cv.position,
@@ -89,7 +89,8 @@ export class CVService {
             }
           }),
         this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 }),
-        this.recombeeService.addCV(createdCV as CVDocument)
+        this.recombeeService.addCV(createdCV as CVDocument),
+        this.recombeeService.addCandidate(candidate)
       ]);
 
       return {
@@ -177,9 +178,9 @@ export class CVService {
         reviewCVResponse,
       });
 
+      await this.recombeeService.addCandidate(candidate),
       await Promise.all([
         this.recombeeService.addEvaluation(evaluation as EvaluationDocument),
-        this.recombeeService.addCandidate(candidate),
         this.applicationRepository.create({
           candidateId: userId,
           cvId,
@@ -292,6 +293,7 @@ export class CVService {
         data: evaluation,
       };
     } catch (error) {
+      console.error("Error in reviewCV:", error.message);
       throw new HttpException("reviewCV error", HttpStatus.INTERNAL_SERVER_ERROR, {
         cause: error,
       });

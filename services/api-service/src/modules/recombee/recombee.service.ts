@@ -3,9 +3,11 @@ import { CandidateRepository } from '@modules/candidate/repositories';
 import { JDRepository } from '@modules/cv/repositories';
 import { CVDocument, EvaluationDocument, JDDocument } from '@modules/cv/schemas';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { AddItem, SetItemValues, AddDetailView, AddPurchase, AddRating, RecommendItemsToItem, RecommendItemsToUser, ListItems, SetUserValues, ListUsers, RecommendUsersToUser, AddUserProperty, AddItemProperty, AddBookmark } from 'recombee-api-client/lib/requests';
+import { AddItem, SetItemValues, AddDetailView, AddPurchase, AddRating, RecommendItemsToItem, RecommendItemsToUser, ListItems, SetUserValues, ListUsers, RecommendUsersToUser, AddUserProperty, AddItemProperty, AddBookmark, DeleteUser } from 'recombee-api-client/lib/requests';
 import { ApiClient } from 'recombee-api-client';
 import { CandidateDocument } from '@modules/candidate/schemas';
+import { RedisService } from '@modules/redis';
+import { lang } from 'moment-timezone';
 
 
 @Injectable()
@@ -15,7 +17,8 @@ export class RecombeeService {
   constructor(
     @Inject(forwardRef(() => JDRepository))
     private readonly jdRepository: JDRepository,
-    private readonly candidateRepository: CandidateRepository
+    private readonly candidateRepository: CandidateRepository,
+    private readonly redisService: RedisService
   ) {
     this.client = new ApiClient(env.recombee.DB_DEV, env.recombee.DEV_PRIVATE_TOKEN, { region: 'ap-se' });
     // this.initializeProperties();
@@ -58,6 +61,11 @@ export class RecombeeService {
       await this.client.send(new AddUserProperty('skills', 'set'));
       await this.client.send(new AddUserProperty('experience', 'set'));
       await this.client.send(new AddUserProperty('location', 'string'));
+      await this.client.send(new AddUserProperty('education', 'set'));
+      await this.client.send(new AddUserProperty('projects', 'set'));
+      await this.client.send(new AddUserProperty('summary', 'string'));
+      await this.client.send(new AddUserProperty('certifications', 'set'));
+      await this.client.send(new AddUserProperty('languages', 'set'));
       await this.client.send(new AddUserProperty('isJobIdeal', 'boolean')); // Dùng cho ứng viên lý tưởng
       console.log('Successfully added user properties to Recombee');
     } catch (error) {
@@ -150,11 +158,17 @@ export class RecombeeService {
   async addCandidate(candidate: CandidateDocument) {
     try {
       const userValues = {
+        position: candidate.position || '',
+        certifications: candidate.information?.certifications || [],
+        education: candidate.information?.education || [],
+        languages: candidate.information?.languages || [],
+        projects: candidate.information?.projects || [],
+        summary: candidate.information?.summary || '',
         skills: (candidate.information?.skills || []).map(skill => skill.toLowerCase()) || [],
         experience: candidate.information?.experience || [],
         isJobIdeal: false,
       };
-
+      console.log(userValues);
 
       await this.client.send(
         new SetUserValues(candidate.userId, userValues, { cascadeCreate: true }),
@@ -171,6 +185,11 @@ export class RecombeeService {
       const jd = await this.jdRepository.findById(jdId);
       const userValues = {
         skills: (jd.requirements.skills || []).map(skill => skill.toLowerCase()) || [],
+        certifications: jd.requirements.certifications || [],
+        education: jd.requirements.education || [],
+        languages: jd.requirements.languages || [],
+        projects: jd.requirements.projects || [],
+        summary: jd.requirements.summary || '',
         experience: jd.requirements.experience || [],
         position: jd.position || '',
         location: jd.location || '',
@@ -184,7 +203,13 @@ export class RecombeeService {
   }
 
   async recommendCandidatesForJD(jdId: string, limit: number = 10, page: number = 1) {
+    const cacheKey = `recommendations:jd:${jdId}:limit:${limit}:page:${page}`;
+    const CACHE_EXPIRATION_SECONDS = 3600;
     try {
+      const cachedCandidates = await this.redisService.get(cacheKey);
+      if (cachedCandidates) {
+        return JSON.parse(cachedCandidates);
+      }
       await this.createJobIdealCandidate(jdId);
       const request = new RecommendUsersToUser(jdId, limit, {
         scenario: 'jd-to-candidate',
@@ -196,19 +221,19 @@ export class RecombeeService {
         offset: (page - 1) * limit
       });
       const response = await this.client.send(request);
-      let userIds = response.recomms.map((r) => r.id);
+      let users = response.recomms;
 
       // Fallback nếu không có gợi ý
-      if (userIds.length === 0) {
+      if (users.length === 0) {
         const fallbackRequest = new ListUsers({
           returnProperties: true,
           offset: (page - 1) * limit,
         });
         const fallbackResponse = await this.client.send(fallbackRequest);
-        userIds = fallbackResponse.items.map((item) => item.userId);
+        users = fallbackResponse.items;
       }
-
-      return userIds;
+      await this.redisService.set(cacheKey, JSON.stringify(users), { ttl: CACHE_EXPIRATION_SECONDS });
+      return users;
     } catch (error) {
       console.error('Error recommending candidates for JD:', error);
       throw error;
@@ -270,14 +295,33 @@ export class RecombeeService {
 
   // Gợi ý JD cho ứng viên
   async recommendJDsForCandidate(candidateId: string, limit: number = 10, page: number = 1) {
+    const cacheKey = `recommendations:candidate:${candidateId}:limit:${limit}:page:${page}`;
+    const candidateSkillsCacheKey = `candidate_skills:${candidateId}`;
+    const CACHE_EXPIRATION_SECONDS = 3600;
+
     try {
-      const candidate = await this.candidateRepository.findById(candidateId);
-      const candidateSkills = (candidate?.information?.skills || []).map(skill => skill.toLowerCase());
+      const cachedJDs = await this.redisService.get(cacheKey);
+      if (cachedJDs) {
+        console.log('Serving JDs from Redis cache');
+        return JSON.parse(cachedJDs);
+      }
+      let candidateSkills: string[] = [];
+      const cachedCandidateSkills = await this.redisService.get(candidateSkillsCacheKey);
+
+      if (cachedCandidateSkills) {
+        candidateSkills = JSON.parse(cachedCandidateSkills);
+        console.log('Serving candidate skills from Redis cache');
+      } else {
+        const candidate = await this.candidateRepository.findById(candidateId);
+        candidateSkills = (candidate?.information?.skills || []).map(skill => skill.toLowerCase());
+
+        await this.redisService.set(candidateSkillsCacheKey, JSON.stringify(candidateSkills), { ttl: CACHE_EXPIRATION_SECONDS });
+        console.log('Candidate skills fetched from DB and cached');
+      }
+
       let boosterString: string | undefined;
       if (candidateSkills.length > 0) {
-        // Đếm số lượng skill của JD (item['skills']) có trong danh sách candidateSkills
         boosterString = `sum(map(item['skills'], jd_skill -> if (${JSON.stringify(candidateSkills)}.indexOf(jd_skill) > -1) then 1.0 else 0.0)) * 0.6`;
-      // Ví dụ: Nếu JD có 3 skills khớp với candidate, điểm boost sẽ là 3 * 0.6 = 1.8
       }
 
       const request = new RecommendItemsToUser(candidateId, limit, {
@@ -287,23 +331,26 @@ export class RecombeeService {
         returnProperties: true,
         offset: (page - 1) * limit
       });
-      const response = await this.client.send(request);
-      let jdIds = response.recomms.map((r) => r.id);
+
+      let jds = (await this.client.send(request)).recomms;
 
       // Fallback nếu không có gợi ý
-      if (jdIds.length === 0) {
+      if (jds.length === 0) {
+        console.log('No recommendations, performing fallback');
         const fallbackRequest = new ListItems({
           returnProperties: true,
           filter: "'type' == \"jd\" and 'visibility' == \"public\" and 'verified' == true",
           offset: (page - 1) * limit
         });
-        const fallbackResponse = await this.client.send(fallbackRequest);
-        jdIds = fallbackResponse.items.map((item) => item.itemId);
+        jds = (await this.client.send(fallbackRequest)).items;
       }
 
-      return jdIds;
+      await this.redisService.set(cacheKey, JSON.stringify(jds), { ttl: CACHE_EXPIRATION_SECONDS });
+
+      return jds;
     } catch (error) {
       console.error('Error recommending JDs for candidate:', error);
+      // Đảm bảo đóng kết nối Redis nếu có lỗi nghiêm trọng hoặc xử lý lại lỗi
       throw error;
     }
   }

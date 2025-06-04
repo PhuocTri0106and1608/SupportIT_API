@@ -20,12 +20,13 @@ export class CandidateController {
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)
   async createOrUpdateCandidate(@CurrentUser("id") candidateId: string, @Body() body: UpdateCandidateDto): Promise<ResponseType> {
+    const candidate = await this.candidateService.createOrUpdateCandidate({
+      userId: candidateId,
+      data: body
+    });
     return {
       code: CodeResponseEnum.SUCCESS,
-      data: this.candidateService.createOrUpdateCandidate({
-        userId: candidateId,
-        data: body
-      })
+      data: candidate
     }
   }
 }
