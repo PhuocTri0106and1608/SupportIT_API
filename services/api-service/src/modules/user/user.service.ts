@@ -156,7 +156,7 @@ export class UserService {
 
     async updateAvatar(user: IAuthPayload, avatar: string): Promise<ResponseType> {
         try {
-            await this.userRepository.findOneAndUpdate({ _id: new Types.ObjectId(user.id) }, { set: { avatar } });
+            await this.userRepository.findOneAndUpdate({ _id: new Types.ObjectId(user.id) }, { $set: { avatar } });
             const profile = await this.getProfile(user);
             return {
                 code: CodeResponseEnum.SUCCESS,

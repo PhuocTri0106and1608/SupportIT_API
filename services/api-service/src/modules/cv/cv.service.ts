@@ -1,4 +1,4 @@
-import { CodeResponseEnum, LoginRoleEnum } from "@common/enums";
+import { CodeResponseEnum } from "@common/enums";
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { ApplicationRepository, CVRepository, EvaluationRepository, JDRepository } from "./repositories";
 import { CV, CVDocument, EvaluationDocument, JD, JDDocument } from "./schemas";
@@ -9,7 +9,7 @@ import { CandidateRepository } from "@modules/candidate/repositories";
 import { Types } from "mongoose";
 import { env } from "@environments";
 import { RedisService } from "@modules/redis";
-import { RecombeeService } from "@modules/recombee/recombee.service";
+import { RecombeeQueueService } from "@modules/bull-queue";
 @Injectable()
 export class CVService {
 
@@ -19,8 +19,8 @@ export class CVService {
     private readonly evaluationRepository: EvaluationRepository,
     private readonly applicationRepository: ApplicationRepository,
     private readonly candidateRepository: CandidateRepository,
-    @Inject(forwardRef(() => RecombeeService))
-    private readonly recombeeService: RecombeeService,
+    @Inject(forwardRef(() => RecombeeQueueService))
+    private readonly recombeeQueueService: RecombeeQueueService,
     private readonly redisService: RedisService,
   ) { }
 
@@ -36,10 +36,12 @@ export class CVService {
 
       await this.redisService.set(`jd:${createdJD._id}`, createdJD, { ttl: 3600 });
       if (isRecruiter && jd.visibility === "public") {
-        await Promise.all([
-          this.recombeeService.addJD(createdJD as JDDocument),
-          this.recombeeService.createJobIdealCandidate(createdJD._id.toString())
-        ]);
+        const jdDataForQueue = JSON.parse(JSON.stringify(createdJD));
+
+        this.recombeeQueueService.addJdToRecombee({ jd: jdDataForQueue });
+        this.recombeeQueueService.createJobIdealCandidateInRecombee({
+          jdId: createdJD._id.toString(),
+        });
       }
 
       return {
@@ -79,19 +81,23 @@ export class CVService {
         information: extractCVResponse,
       });
 
+      const cvDataForQueue = JSON.parse(JSON.stringify(createdCV));
+      const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
+
       await Promise.all([
         this.candidateRepository.findOneAndUpdate(
           { userId: candidate.userId },
           {
-            set: {
+            $set: {
               position: cv.position,
               infomation: extractCVResponse
             }
           }),
-        this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 }),
-        this.recombeeService.addCV(createdCV as CVDocument),
-        this.recombeeService.addCandidate(candidate)
       ]);
+      
+      this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 }),
+      this.recombeeQueueService.addCvToRecombee({ cv: cvDataForQueue });
+      this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue });
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -178,22 +184,24 @@ export class CVService {
         reviewCVResponse,
       });
 
-      await this.recombeeService.addCandidate(candidate),
-      await Promise.all([
-        this.recombeeService.addEvaluation(evaluation as EvaluationDocument),
-        this.applicationRepository.create({
-          candidateId: userId,
-          cvId,
-          jdId,
-          evaluationId: evaluation._id.toString(),
-          status: "pending",
-        }),
-        this.recombeeService.addInteraction(
-          userId,
-          jd._id.toString(),
-          "apply"
-        )
-      ]);
+      const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
+      const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
+
+      this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue });
+      this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue });
+      this.recombeeQueueService.addInteractionToRecombee({
+        userId,
+        itemId: jd._id.toString(),
+        interactionType: 'apply'
+      });
+
+      await this.applicationRepository.create({
+        candidateId: userId,
+        cvId,
+        jdId,
+        evaluationId: evaluation._id.toString(),
+        status: "pending",
+      });
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -279,15 +287,12 @@ export class CVService {
         reviewCVResponse,
       });
 
-      await Promise.all([
-        this.recombeeService.addEvaluation(evaluation as EvaluationDocument),
-        this.recombeeService.addCandidate(candidate)
-      ]);
-      // this.recombeeService.addInteraction(
-      //   userId,
-      //   jd._id.toString(),
-      //   "apply"
-      // );
+      const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
+      const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
+
+      this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue });
+      this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue });
+
       return {
         code: CodeResponseEnum.SUCCESS,
         data: evaluation,
@@ -586,16 +591,15 @@ export class CVService {
         { status }
       );
 
-      // Xóa cache liên quan
       const cachePattern = 'applications:list:*';
-      await Promise.all([
-        this.redisService.deleteByPattern(cachePattern),
-        this.recombeeService.addInteraction(
-          application.candidateId,
-          jd._id.toString(),
-          status
-        )
-      ]);
+      await this.redisService.deleteByPattern(cachePattern);
+
+      this.recombeeQueueService.addInteractionToRecombee({
+        userId: application.candidateId,
+        itemId: jd._id.toString(),
+        interactionType: status,
+      });
+
 
       return {
         code: CodeResponseEnum.SUCCESS,

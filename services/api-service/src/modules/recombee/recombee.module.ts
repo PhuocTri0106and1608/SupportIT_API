@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { RecombeeService } from './recombee.service';
 import { RecombeeController } from './recombee.controller';
 import { CVModule } from '@modules/cv/cv.module';
@@ -9,6 +9,6 @@ import { RedisModule } from '@modules/redis';
   providers: [RecombeeService],
   controllers: [RecombeeController],
   exports: [RecombeeService],
-  imports: [forwardRef(() => CVModule), CandidateModule, RedisModule]
+  imports: [CVModule, CandidateModule, RedisModule]
 })
 export class RecombeeModule { }

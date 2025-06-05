@@ -7,7 +7,7 @@ import { CVController } from "./cv.controller";
 import { CVService } from "./cv.service";
 import { CandidateModule } from "@modules/candidate/candidate.module";
 import { MediaModule } from "@modules/media/media.module";
-import { RecombeeModule } from "@modules/recombee/recombee.module";
+import { BullQueueModule } from "@modules/bull-queue";
 
 @Module({
   imports: [
@@ -16,7 +16,7 @@ import { RecombeeModule } from "@modules/recombee/recombee.module";
     RedisModule,
     CandidateModule,
     MediaModule,
-    forwardRef(() => RecombeeModule)
+    forwardRef(() => BullQueueModule)
   ],
   providers: [CVService, CVRepository, ApplicationRepository, EvaluationRepository, JDRepository],
   exports: [CVService, CVRepository, JDRepository, EvaluationRepository, ApplicationRepository],

@@ -2,12 +2,11 @@ import { env } from '@environments';
 import { CandidateRepository } from '@modules/candidate/repositories';
 import { JDRepository } from '@modules/cv/repositories';
 import { CVDocument, EvaluationDocument, JDDocument } from '@modules/cv/schemas';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AddItem, SetItemValues, AddDetailView, AddPurchase, AddRating, RecommendItemsToItem, RecommendItemsToUser, ListItems, SetUserValues, ListUsers, RecommendUsersToUser, AddUserProperty, AddItemProperty, AddBookmark, DeleteUser } from 'recombee-api-client/lib/requests';
 import { ApiClient } from 'recombee-api-client';
 import { CandidateDocument } from '@modules/candidate/schemas';
 import { RedisService } from '@modules/redis';
-import { lang } from 'moment-timezone';
 
 
 @Injectable()
@@ -15,10 +14,9 @@ export class RecombeeService {
   private client: ApiClient;
 
   constructor(
-    @Inject(forwardRef(() => JDRepository))
     private readonly jdRepository: JDRepository,
     private readonly candidateRepository: CandidateRepository,
-    private readonly redisService: RedisService
+    private readonly redisService: RedisService,
   ) {
     this.client = new ApiClient(env.recombee.DB_DEV, env.recombee.DEV_PRIVATE_TOKEN, { region: 'ap-se' });
     // this.initializeProperties();
