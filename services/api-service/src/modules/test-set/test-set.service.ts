@@ -8,6 +8,10 @@ import { LeetCodeProblemRepository } from '../leetcode/repositories/leetcode-pro
 import { TestSet } from "./schemas";
 import { QuizRepository } from "@modules/quizz/repositories";
 import { JDRepository } from "@modules/cv/repositories";
+import { plainToClass } from "class-transformer";
+import { LeetCodeProblemResponseDto } from "@modules/leetcode/dtos";
+import { TestSetResponseDto } from "./dtos";
+import { QuizResponseDto } from "@modules/quizz/dtos";
 
 @Injectable()
 export class TestSetService {
@@ -22,9 +26,9 @@ export class TestSetService {
 
   async linkTestSet(
     request: {creatorUserId: string,
-    quizId: string, problemId: string, jdId: string, duration?: number}
+    quizIds: string[], problemIds: string[], jdId: string, duration?: number}
   ): Promise<ResponseType> {
-    const { creatorUserId, quizId, problemId, jdId, duration } = request;
+    const { creatorUserId, quizIds, problemIds, jdId, duration } = request;
     try {
       const [existingTestSet, jd] = await Promise.all([
         this.testSetRepository.findOne({ jdId }),
@@ -39,8 +43,8 @@ export class TestSetService {
 
       const newTestSet = await this.testSetRepository.create({
         creatorUserId,
-        quizId,
-        problemId,
+        quizIds,
+        problemIds,
         jdId,
         duration: duration ?? 0,
       });
@@ -67,29 +71,54 @@ export class TestSetService {
           data: cached,
         };
       }
+
       const testSet: TestSet = await this.testSetRepository.findOne({ jdId });
       if (!testSet) {
-        throw new HttpException("Quiz not found", HttpStatus.NOT_FOUND);
+        throw new HttpException("TestSet not found for the given JD", HttpStatus.NOT_FOUND);
       }
-      const [quiz, problem] = await Promise.all([
-        this.quizRepository.findById(testSet.quizId),
-        this.problemRepository.findById(testSet.problemId)
+
+      const [quizzes, problems] = await Promise.all([
+        this.quizRepository.find(
+          { _id: { $in: testSet.quizIds } }
+        ),
+        this.problemRepository.find({ _id: { $in: testSet.problemIds } }),
       ]);
+
+      const transformedQuizzes = quizzes.map(problem =>
+        plainToClass(QuizResponseDto, problem.toObject(), {
+          excludeExtraneousValues: true
+        })
+      );
+
+      const transformedProblems = problems.map(problem =>
+        plainToClass(LeetCodeProblemResponseDto, problem.toObject(), {
+          excludeExtraneousValues: true
+        })
+      );
+
       const fullTestSet = {
         creatorUserId: testSet.creatorUserId,
         jdId: testSet.jdId,
         duration: testSet.duration,
-        quiz,
-        problem,
-      }
+        quizzes: transformedQuizzes,
+        problems: transformedProblems,
+      };
 
-      await this.redisService.set(cacheKey, fullTestSet, { ttl: 60 * 60 });
+      const resultData = plainToClass(TestSetResponseDto, fullTestSet, {
+        excludeExtraneousValues: true,
+      });
+
+
+      await this.redisService.set(cacheKey, resultData, { ttl: 60 * 60 });
 
       return {
         code: CodeResponseEnum.SUCCESS,
-        data: fullTestSet,
+        data: resultData,
       };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new HttpException("getTestSetByJD error", HttpStatus.INTERNAL_SERVER_ERROR, {
         cause: error,
       });

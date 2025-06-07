@@ -1,5 +1,6 @@
 import { PageOptionsDto } from "@common/dtos";
-import { ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Expose } from "class-transformer";
 import { IsOptional, IsString } from "class-validator";
 
 export class FilterQuizzesRequestDto extends PageOptionsDto {
@@ -7,4 +8,33 @@ export class FilterQuizzesRequestDto extends PageOptionsDto {
   @IsString()
   @IsOptional()
   category?: string;
+}
+
+export class QuizResponseDto {
+  @Expose()
+  @ApiProperty()
+  _id: string;
+
+  @Expose()
+  @ApiProperty()
+  title: string;
+
+  @Expose()
+  @ApiProperty()
+  categories: string[];
+
+  @Expose()
+  @ApiProperty()
+  sourceUrl: string;
+
+  @Expose()
+  @ApiProperty()
+  questions: {
+    question: string;
+    options: string[];
+  }[];
+
+  @Expose()
+  @ApiProperty()
+  duration: number;
 }
