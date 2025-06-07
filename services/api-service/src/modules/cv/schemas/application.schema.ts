@@ -15,8 +15,11 @@ export class Application extends BaseSchema {
   @Prop({ required: true })
   jdId: string;
 
-  @Prop({ type: String })
+  @Prop({ type: String, required: true })
   evaluationId: string;
+
+  @Prop({ type: Number, required: true })
+  overallScore: number;
 
   @Prop({ required: true, enum: ["pending", "shortlisted", "rejected", "accepted"] })
   status: "pending" | "shortlisted" | "rejected" | "accepted";
@@ -24,3 +27,4 @@ export class Application extends BaseSchema {
 
 export const ApplicationSchema = SchemaFactory.createForClass(Application);
 ApplicationSchema.index({ candidateId: 1, cvId: 1, jdId: 1, status: 1 });
+ApplicationSchema.index({ jdId: 1, overallScore: -1 });

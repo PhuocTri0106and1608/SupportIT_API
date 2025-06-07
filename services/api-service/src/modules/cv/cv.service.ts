@@ -199,6 +199,7 @@ export class CVService {
         candidateId: userId,
         cvId,
         jdId,
+        overallScore: reviewCVResponse.summary.overall_score,
         evaluationId: evaluation._id.toString(),
         status: "pending",
       });
@@ -325,7 +326,7 @@ export class CVService {
       }
 
       const [applications, total] = await Promise.all([
-        this.applicationRepository.findWithPagination(filter, skip, limit),
+        this.applicationRepository.findWithPaginationAndSort(filter, skip, limit),
         this.applicationRepository.countDocuments(filter),
       ]);
 
