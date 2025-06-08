@@ -9,7 +9,8 @@ import { CandidateRepository } from "@modules/candidate/repositories";
 import { Types } from "mongoose";
 import { env } from "@environments";
 import { RedisService } from "@modules/redis";
-import { RecombeeQueueService } from "@modules/bull-queue";
+import { EmailType, MailQueueService, RecombeeQueueService } from "@modules/bull-queue";
+import { UserRepository } from "@modules/user";
 @Injectable()
 export class CVService {
 
@@ -19,8 +20,12 @@ export class CVService {
     private readonly evaluationRepository: EvaluationRepository,
     private readonly applicationRepository: ApplicationRepository,
     private readonly candidateRepository: CandidateRepository,
+    @Inject(forwardRef(() => UserRepository))
+    private readonly userRepository: UserRepository,
     @Inject(forwardRef(() => RecombeeQueueService))
     private readonly recombeeQueueService: RecombeeQueueService,
+    @Inject(forwardRef(() => MailQueueService))
+    private readonly mailQueueService: MailQueueService,
     private readonly redisService: RedisService,
   ) { }
 
@@ -595,13 +600,20 @@ export class CVService {
       const cachePattern = 'applications:list:*';
       await this.redisService.deleteByPattern(cachePattern);
 
+      const user = await this.userRepository.findOne({ _id: new Types.ObjectId(application.candidateId) });
+      const emailData = {
+        to: user.email,
+        jobTitle: jd.title,
+        companyName: jd.companyName,
+        applicationStatus: status,
+      }
+      this.mailQueueService.addToQueue(EmailType.APPLICATION_STATUS, emailData);
       this.recombeeQueueService.addInteractionToRecombee({
         userId: application.candidateId,
         itemId: jd._id.toString(),
         interactionType: status,
       });
-
-
+      
       return {
         code: CodeResponseEnum.SUCCESS,
         data: updatedApplication,

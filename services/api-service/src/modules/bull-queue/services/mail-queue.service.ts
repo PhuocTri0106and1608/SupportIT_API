@@ -6,12 +6,16 @@ import { Injectable } from "@nestjs/common";
 import { Queue } from "bullmq";
 
 export enum EmailType {
-    OTP = "otp"
+    OTP = "otp",
+    APPLICATION_STATUS = "application_status",
 }
 
-export interface OtpEmailData {
+export interface EmailData {
     to: string;
-    otp: string;
+    otp?: string;
+    companyName?: string;
+    jobTitle?: string;
+    applicationStatus?: string;
 }
 
 @Injectable()
@@ -19,11 +23,11 @@ export class MailQueueService {
     constructor(
         @InjectQueue("mail-queue") private mailQueue: Queue,
         private readonly mailerService: MailerService
-    ) {}
+    ) { }
 
     async addToQueue(
         type: EmailType,
-        data: OtpEmailData,
+        data: EmailData,
         options?: {
             priority?: number;
             delay?: number;
@@ -56,7 +60,7 @@ export class MailQueueService {
         }
     }
 
-    async addBulkToQueue(type: EmailType, dataArray: Array<OtpEmailData>) {
+    async addBulkToQueue(type: EmailType, dataArray: Array<EmailData>) {
         try {
             const jobs = dataArray.map((data) => ({
                 name: type,
@@ -79,7 +83,11 @@ export class MailQueueService {
         }
     }
 
-    async handleOtpEmail(data: OtpEmailData): Promise<InternalResponseType> {
+    async handleOtpEmail(data: EmailData): Promise<InternalResponseType> {
         return this.mailerService.sendOtpEmail({ email: data.to }, data.otp);
+    }
+
+    async handleApplicationEmail(data: EmailData): Promise<InternalResponseType> {
+        return this.mailerService.sendApplicationEmail({ email: data.to }, data.companyName, data.jobTitle, data.applicationStatus);
     }
 }

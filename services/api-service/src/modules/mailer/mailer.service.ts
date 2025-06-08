@@ -38,10 +38,11 @@ export class MailerService implements OnModuleInit {
         };
 
         this.templates = {
-            otp: MailerService.parseTemplate("otp.hbs")
+            otp: MailerService.parseTemplate("otp.hbs"),
+            application: MailerService.parseTemplate("application.hbs")
         };
         this.transport = createTransport(emailConfig);
-        this.email = `"My App" <${emailConfig.auth.user}>`;
+        this.email = `"Support IT" < ${ emailConfig.auth.user }>`;
 
         this.transport
             .verify()
@@ -74,6 +75,26 @@ export class MailerService implements OnModuleInit {
         try {
             const html = this.templates.otp({
                 code: code
+            });
+
+            return this.sendEmail(email, subject, html);
+        } catch (e) {
+            return {
+                result: false,
+                error: e
+            };
+        }
+    }
+
+    async sendApplicationEmail(userInfo: IUseEmailInfo, companyName: string, jobTitle: string, applicationStatus: string): Promise<InternalResponseType> {
+        const { email } = userInfo;
+        const subject = "Application Status Update";
+
+        try {
+            const html = this.templates.application({
+                companyName,
+                jobTitle,
+                applicationStatus
             });
 
             return this.sendEmail(email, subject, html);

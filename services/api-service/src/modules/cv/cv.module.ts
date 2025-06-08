@@ -8,6 +8,7 @@ import { CVService } from "./cv.service";
 import { CandidateModule } from "@modules/candidate/candidate.module";
 import { MediaModule } from "@modules/media/media.module";
 import { BullQueueModule } from "@modules/bull-queue";
+import { UserModule } from "@modules/user";
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { BullQueueModule } from "@modules/bull-queue";
     RedisModule,
     CandidateModule,
     MediaModule,
+    forwardRef(() => UserModule),
     forwardRef(() => BullQueueModule)
   ],
   providers: [CVService, CVRepository, ApplicationRepository, EvaluationRepository, JDRepository],

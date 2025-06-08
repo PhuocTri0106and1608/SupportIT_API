@@ -1,7 +1,7 @@
 import { MESSAGE_CODES } from "@common/constants";
 import { CodeResponseEnum, LoginRoleEnum, LoginStepEnum, LoginTypeEnum } from "@common/enums";
 import { env } from "@environments";
-import { EmailType, MailQueueService, OtpEmailData } from "@modules/bull-queue";
+import { EmailType, MailQueueService, EmailData } from "@modules/bull-queue";
 import { GoogleService } from "@modules/google";
 import { logger } from "@modules/logger";
 import { RedisService } from "@modules/redis";
@@ -16,7 +16,7 @@ export class Web2AuthService {
         private readonly redisService: RedisService,
         private readonly userService: UserService,
         private readonly mailQueueService: MailQueueService
-    ) {}
+    ) { }
 
     async getLoginRequest(req: { type: LoginTypeEnum; data: any }, role: LoginRoleEnum) {
         try {
@@ -81,7 +81,7 @@ export class Web2AuthService {
         const otp = otpGenerator.generate(env.otp.LENGTH, { upperCaseAlphabets: false, specialChars: false, digits: true, lowerCaseAlphabets: false });
         await this.redisService.set(`mail:${email}:otp`, otp, { ttl: env.otp.LIFE });
 
-        const emailData: OtpEmailData = {
+        const emailData: EmailData = {
             to: email,
             otp: otp
         };

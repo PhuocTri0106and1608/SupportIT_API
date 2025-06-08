@@ -2,7 +2,7 @@ import { InternalResponseType } from "@common/dtos";
 import { logger } from "@modules/logger";
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Job } from "bullmq";
-import { EmailType, MailQueueService, OtpEmailData } from "../services/mail-queue.service";
+import { EmailType, MailQueueService, EmailData } from "../services/mail-queue.service";
 
 @Processor("mail-queue")
 export class MailQueueProcessor extends WorkerHost {
@@ -16,7 +16,9 @@ export class MailQueueProcessor extends WorkerHost {
         try {
             switch (job.name) {
                 case EmailType.OTP:
-                    return await this.processOtpEmail(job.data as OtpEmailData);
+                    return await this.processOtpEmail(job.data as EmailData);
+                case EmailType.APPLICATION_STATUS:
+                    return await this.processApplicationEmail(job.data as EmailData);
                 default:
                     throw new Error(`Unsupported email type: ${job.name}`);
             }
@@ -26,10 +28,19 @@ export class MailQueueProcessor extends WorkerHost {
         }
     }
 
-    private async processOtpEmail(data: OtpEmailData): Promise<InternalResponseType> {
+    private async processOtpEmail(data: EmailData): Promise<InternalResponseType> {
         logger.info(`Sending OTP email to ${data.to}`);
         try {
             return this.mailQueueService.handleOtpEmail(data);
+        } catch (error) {
+            logger.error(`Error sending OTP email: ${error.message}`);
+            throw error;
+        }
+    }
+    private async processApplicationEmail(data: EmailData): Promise<InternalResponseType> {
+        logger.info(`Sending OTP email to ${data.to}`);
+        try {
+            return this.mailQueueService.handleApplicationEmail(data);
         } catch (error) {
             logger.error(`Error sending OTP email: ${error.message}`);
             throw error;
