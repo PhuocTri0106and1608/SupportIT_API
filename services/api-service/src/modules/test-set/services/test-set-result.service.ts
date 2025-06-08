@@ -1,0 +1,195 @@
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { ResponseType } from "@common/dtos";
+import { CodeResponseEnum } from "@common/enums";
+import { TestSetResultRepository } from "../repositories";
+import { RedisService } from "@modules/redis";
+import { Types } from "mongoose";
+import { TestSetResult } from "../schemas";
+import { SubmitQuizDto } from "@modules/quizz/dtos";
+import { QuizService } from "@modules/quizz/quiz.service";
+import { SubmitCodeDto } from "@modules/judge/dto";
+import { JudgeService } from "@modules/judge/judge.service";
+
+@Injectable()
+export class TestSetResultService {
+
+  constructor(
+    private readonly testSetResultRepository: TestSetResultRepository,
+    private readonly quizService: QuizService,
+    private readonly judgeService: JudgeService,
+    private readonly redisService: RedisService,
+  ) { }
+
+  async startTestSet(
+    request: {candidateId: string,
+    testSetId: string}
+  ): Promise<ResponseType> {
+    const { candidateId, testSetId } = request;
+    try {
+      const newTestSetResult = await this.testSetResultRepository.create({
+        candidateId,
+        testSetId
+      });
+      
+      const cacheKey = `testSetResult:${newTestSetResult._id.toString()}`;
+      await this.redisService.set(cacheKey, newTestSetResult, { ttl: 60 * 60 });
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: newTestSetResult,
+      };
+    } catch (error) {
+      throw new HttpException("startTestSet error", HttpStatus.INTERNAL_SERVER_ERROR, {
+        cause: error,
+      });
+    }
+  }
+
+  async submitQuizTestSet(
+    request: {
+      testSetResultId: string,
+      quizId: string,
+      candidateId: string,
+      submitData: SubmitQuizDto
+    }
+  ): Promise<ResponseType> {
+    const { testSetResultId, quizId, candidateId, submitData } = request;
+    try {
+      const quizResult = await this.quizService.submit(quizId, candidateId, submitData);
+      if (quizResult.code !== CodeResponseEnum.SUCCESS) {
+        throw new HttpException("Quiz submission failed", HttpStatus.BAD_REQUEST);
+      }
+      const { score } = quizResult.data;
+      const testSetResult = await this.testSetResultRepository.findOneAndUpdate({ _id: new Types.ObjectId(testSetResultId) }, {
+        $push: {
+          completedQuizIds: quizId,
+        },
+        $inc: {
+          totalQuizScore: score,
+        },
+      });
+
+      const cacheKey = `testSetResult:${testSetResultId}`;
+      await this.redisService.set(cacheKey, testSetResult, { ttl: 60 * 60 });
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: testSetResult,
+      };
+    } catch (error) {
+      throw new HttpException("submitQuizTestSet error", HttpStatus.INTERNAL_SERVER_ERROR, {
+        cause: error,
+      });
+    }
+  }
+
+  async submitProblemTestSet(
+    request: {
+      testSetResultId: string,
+      candidateId: string,
+      submitData: SubmitCodeDto
+    }
+  ): Promise<ResponseType> {
+    const { testSetResultId, candidateId, submitData } = request;
+    try {
+      const problemResult = await this.judgeService.submitCode(candidateId, submitData.sourceCode, submitData.languageId, submitData.problemId);
+      if (problemResult.code !== CodeResponseEnum.SUCCESS) {
+        throw new HttpException("Code submission failed", HttpStatus.BAD_REQUEST);
+      }
+      const { problemId, success } = problemResult.data;
+      const testSetResult = await this.testSetResultRepository.findOneAndUpdate({ _id: new Types.ObjectId(testSetResultId) }, {
+        $push: {
+          completedProblemIds: problemId,
+        },
+        $inc: {
+          totalPassedCodingProblems: success ? 1 : 0,
+          totalCodingProblems: 1,
+        },
+      });
+
+      const cacheKey = `testSetResult:${testSetResultId}`;
+      await this.redisService.set(cacheKey, testSetResult, { ttl: 60 * 60 });
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: testSetResult,
+      };
+    } catch (error) {
+      throw new HttpException("submitProblemTestSet error", HttpStatus.INTERNAL_SERVER_ERROR, {
+        cause: error,
+      });
+    }
+  }
+
+  async submitFinalTestSet(id: string): Promise<ResponseType> {
+    try {
+      const cacheKey = `testSetResult:${id}`;
+      let testSetResult: TestSetResult = await this.redisService.get<any>(cacheKey);
+
+      if (!testSetResult) {
+        testSetResult = await this.testSetResultRepository.findById(id);
+      }
+
+      if (!testSetResult) {
+        throw new HttpException("TestSetResult not found", HttpStatus.NOT_FOUND);
+      }
+
+      const quizScore = (testSetResult.totalQuizScore / testSetResult.completedQuizIds.length) || 0;
+      const codingScore = (testSetResult.totalPassedCodingProblems / testSetResult.totalCodingProblems) || 0;
+      const finalScore = (quizScore + codingScore) / 2;
+
+      const endAt: Date = new Date();
+      const actualDuration = Math.floor((endAt.getTime() - testSetResult.startedAt.getTime()) / 1000);
+
+      testSetResult = await this.testSetResultRepository.findOneAndUpdate(
+        { _id: new Types.ObjectId(id) },
+        {
+          finalScore,
+          endAt,
+          actualDuration,
+          submitted: true,
+        }
+      );
+
+      await this.redisService.set(cacheKey, testSetResult, { ttl: 60 * 60 });
+
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: testSetResult,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException("submitFinalTestSet error", HttpStatus.INTERNAL_SERVER_ERROR, {
+        cause: error,
+      });
+    }
+  }
+
+  async getTestSetResultById(id: string): Promise<ResponseType> {
+    try {
+      const cacheKey = `testSetResult:${id}`;
+      const cached = await this.redisService.get<any>(cacheKey);
+
+      if (cached) {
+        return {
+          code: CodeResponseEnum.SUCCESS,
+          data: cached,
+        };
+      }
+
+      const testSetResult: TestSetResult = await this.testSetResultRepository.findById(id);
+      await this.redisService.set(cacheKey, testSetResult, { ttl: 60 * 60 });
+
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: testSetResult,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException("getTestSetResultById error", HttpStatus.INTERNAL_SERVER_ERROR, {
+        cause: error,
+      });
+    }
+  }
+}

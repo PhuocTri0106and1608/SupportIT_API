@@ -5,15 +5,16 @@ import { LoginRoleEnum } from '@common/enums';
 import { ResponseType } from '@common/dtos';
 import { AnyRole, ApiOkResponseCustom, CurrentUser } from '@common/decorators';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { TestSetService } from './test-set.service';
-import { LinkTestSetDto, UpdateTestSetDto } from './dtos';
+import { LinkTestSetDto, SubmitProblemTestSetDto, SubmitQuizTestSetDto, UpdateTestSetDto } from './dtos';
+import { TestSetResultService, TestSetService } from './services';
 
 @ApiTags("Test Set")
 @ApiBearerAuth("access-token")
 @Controller('testSet')
 export class TestSetController {
   constructor(
-    private readonly testSetService: TestSetService
+    private readonly testSetService: TestSetService,
+    private readonly testSetResultService: TestSetResultService,
   ) { }
 
   @Post("linkTestSet")
@@ -38,5 +39,64 @@ export class TestSetController {
   @ApiOkResponseCustom(ResponseType)
   async updateTestSetByJD(@Query() dto: UpdateTestSetDto): Promise<ResponseType> {
     return this.testSetService.updateTestSetByJD(dto);
+  }
+
+  @Post("startTestSet")
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.CANDIDATE)
+  @ApiOkResponseCustom(ResponseType)
+  async startTestSet(@CurrentUser("id") candidateId: string, @Body("testSetId") testSetId: string): Promise<ResponseType> {
+    return this.testSetResultService.startTestSet({candidateId, testSetId});
+  }
+
+  @Post("submitQuizTestSet")
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.CANDIDATE)
+  @ApiOkResponseCustom(ResponseType)
+  async submitQuizTestSet(
+    @CurrentUser("id") candidateId: string,
+    @Body() body: SubmitQuizTestSetDto,
+  ): Promise<ResponseType> {
+    const { testSetResultId, quizId, ...submitData } = body;
+    return this.testSetResultService.submitQuizTestSet({
+      testSetResultId,
+      quizId,
+      candidateId,
+      submitData,
+    });
+  }
+
+  @Post("submitProblemTestSet")
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.CANDIDATE)
+  @ApiOkResponseCustom(ResponseType)
+  async submitProblemTestSet(
+    @CurrentUser("id") candidateId: string,
+    @Body() body: SubmitProblemTestSetDto,
+  ): Promise<ResponseType> {
+    const { testSetResultId, ...submitData } = body;
+    return this.testSetResultService.submitProblemTestSet({
+      testSetResultId,
+      candidateId,
+      submitData,
+    });
+  }
+
+  @Post("submitFinalTestSet")
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.CANDIDATE)
+  @ApiOkResponseCustom(ResponseType)
+  async submitFinalTestSet(
+    @Body("testSetResultId") testSetResultId: string,
+  ): Promise<ResponseType> {
+    return this.testSetResultService.submitFinalTestSet(testSetResultId);
+  }
+
+  @Get("getTestSetResult/:testSetResultId")
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.CANDIDATE)
+  @ApiOkResponseCustom(ResponseType)
+  async getTestSetResult(@Param("testSetResultId") testSetResultId: string): Promise<ResponseType> {
+    return this.testSetResultService.getTestSetResultById(testSetResultId);
   }
 }

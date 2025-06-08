@@ -242,6 +242,7 @@ export class JudgeService {
       return {
         code: CodeResponseEnum.SUCCESS,
         data: {
+          problemId: problem._id.toString(),
           success: bestSubmissionData.success,
           passedTests: bestSubmissionData.passedTests,
           totalTests: bestSubmissionData.totalTests,
