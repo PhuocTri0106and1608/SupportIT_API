@@ -24,6 +24,8 @@ export class LinkTestSetDto {
   duration?: number;
 }
 
+export class UpdateTestSetDto extends LinkTestSetDto {}
+
 export class TestSetResponseDto {
   @Expose()
   @ApiProperty()
