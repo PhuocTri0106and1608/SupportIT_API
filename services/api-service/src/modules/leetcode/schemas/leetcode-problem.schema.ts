@@ -6,6 +6,9 @@ export type LeetCodeProblemDocument = HydratedDocument<LeetCodeProblem>;
 
 @Schema({ timestamps: true, versionKey: false })
 export class LeetCodeProblem extends BaseSchema {
+  @Prop({ type: String, nullable: true })
+  creatorUserId?: string;
+
   @Prop({ required: true, unique: true })
   problemId: number;
 

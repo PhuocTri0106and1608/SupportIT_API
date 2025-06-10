@@ -6,9 +6,11 @@ export type QuizDocument = HydratedDocument<Quiz>;
 
 @Schema({ timestamps: true, versionKey: false })
 export class Quiz extends BaseSchema {
+  @Prop({ type: String, nullable: true })
+  creatorUserId?: string;
   @Prop() title: string;
   @Prop() categories: string[];
-  @Prop() sourceUrl: string;
+  @Prop() sourceUrl?: string;
   @Prop([
     {
       _id: false,

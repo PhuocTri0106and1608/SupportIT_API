@@ -2,8 +2,9 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { ResponseType } from "@common/dtos";
 import { CodeResponseEnum } from "@common/enums";
 import { QuizRepository, QuizSubmissionRepository } from "./repositories";
-import { FilterQuizzesRequestDto, FilterSubmissionsRequestDto, SubmitQuizDto } from "./dtos";
+import { CreateQuizDto, FilterQuizzesRequestDto, FilterSubmissionsRequestDto, SubmitQuizDto, UpdateQuizDto } from "./dtos";
 import { RedisService } from "@modules/redis";
+import { Types } from "mongoose";
 
 @Injectable()
 export class QuizService {
@@ -164,7 +165,7 @@ export class QuizService {
   }
 
   async getListQuizzes(query: FilterQuizzesRequestDto): Promise<ResponseType> {
-    const { page = 1, limit = 10, category } = query;
+    const { page = 1, limit = 10, category, creatorUserId } = query;
     const skip = (page - 1) * limit;
 
     try {
@@ -172,8 +173,11 @@ export class QuizService {
       if (category) {
         filter["categories"] = category;
       }
+      if (creatorUserId) {
+        filter["creatorUserId"] = creatorUserId;
+      }
 
-      const cacheKey = `quizzes:list:page=${page}:limit=${limit}:category=${category || 'all'}`;
+      const cacheKey = `quizzes:list:page=${page}:limit=${limit}:category=${category || 'all'}:creatorUserId=${creatorUserId || 'all'}`;
 
       const cached = await this.redisService.get<any>(cacheKey);
       if (cached) {
@@ -203,7 +207,7 @@ export class QuizService {
         },
       };
 
-      await this.redisService.set(cacheKey, resultData, { ttl: 60 *60 * 60 });
+      await this.redisService.set(cacheKey, resultData, { ttl: 60 * 60 * 60 });
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -248,32 +252,43 @@ export class QuizService {
       });
     }
   }
-  // async updateQuizDurations(): Promise<ResponseType> {
-  //   try {
-  //     const quizzes = await this.quizRepository.find();
+  async createQuiz(creatorUserId: string, quizData: CreateQuizDto): Promise<ResponseType> {
+    try {
+      const newQuiz = await this.quizRepository.create({
+        ...quizData, creatorUserId});
+      if (!newQuiz) {
+        throw new HttpException("Failed to create quiz", HttpStatus.INTERNAL_SERVER_ERROR);
+      }
 
-  //     const updatedQuizzes = await Promise.all(
-  //       quizzes.map(async (quiz) => {
-  //         const numQuestions = quiz.questions?.length || 0;
-  //         const duration = numQuestions * 30; // mỗi câu 30 giây
+      await this.redisService.del(`quizzes:list:page=1:limit=10:category=all`);
 
-  //         return this.quizRepository.findOneAndUpdate(
-  //           { _id: quiz._id },
-  //           { $set: { duration } }
-  //         );
-  //       })
-  //     );
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: newQuiz,
+      };
+    } catch (error) {
+      throw new HttpException("createQuiz error", HttpStatus.INTERNAL_SERVER_ERROR, {
+        cause: error,
+      });
+    }
+  }
 
-  //     return {
-  //       code: CodeResponseEnum.SUCCESS,
-  //       data: {
-  //         updated: updatedQuizzes.length,
-  //       },
-  //     };
-  //   } catch (error) {
-  //     throw new HttpException("updateQuizDurations error", HttpStatus.INTERNAL_SERVER_ERROR, {
-  //       cause: error,
-  //     });
-  //   }
-  // }
+  async updateQuiz(creatorUserId: string, id: string, quizData: UpdateQuizDto): Promise<ResponseType> {
+    try {
+      const updatedQuiz = await this.quizRepository.findOneAndUpdate({ _id: new Types.ObjectId(id) }, quizData);
+      if (!updatedQuiz) {
+        throw new HttpException("Quiz not found or update failed", HttpStatus.NOT_FOUND);
+      }
+      await this.redisService.del(`quizzes:${id}`);
+      await this.redisService.del(`quizzes:list:page=1:limit=10:category=all:creatorUserId=${creatorUserId}`);
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: updatedQuiz,
+      };
+    } catch (error) {
+      throw new HttpException("updateQuiz error", HttpStatus.INTERNAL_SERVER_ERROR, {
+        cause: error,
+      });
+    }
+  }
 }

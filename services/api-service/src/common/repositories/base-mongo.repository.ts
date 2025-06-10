@@ -49,12 +49,12 @@ export class BaseMongoRepository<T> {
         skip: number = 0,
         limit: number = 10,
         isLean: boolean = true,
-        select?: Record<string, 0 | 1> | string  // thêm select tuỳ chọn
+        select?: Record<string, 0 | 1> | string
     ): Promise<any> {
         let query = this.model.find(filter).skip(skip).limit(limit);
 
         if (select) {
-            query = query.select(select);
+            query = query.select(select).sort({ createdAt: -1 });
         }
 
         return isLean ? query.lean().exec() : query.exec();

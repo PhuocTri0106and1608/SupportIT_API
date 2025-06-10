@@ -8,6 +8,11 @@ export class FilterQuizzesRequestDto extends PageOptionsDto {
   @IsString()
   @IsOptional()
   category?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  creatorUserId?: string;
 }
 
 export class QuizResponseDto {

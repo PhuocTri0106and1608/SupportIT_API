@@ -6,7 +6,7 @@ import { AnyRoleGuard, JwtAccessTokenAuthGuard } from '@modules/auth/guards';
 import { AdminActionEnum, LoginRoleEnum, SubjectEnum } from '@common/enums';
 import { ResponseType } from '@common/dtos';
 import { AnyRole, ApiOkResponseCustom, CheckAbilites, CurrentUser } from '@common/decorators';
-import { FilterQuizzesRequestDto, FilterSubmissionsRequestDto, SubmitQuizDto } from './dtos';
+import { CreateQuizDto, FilterQuizzesRequestDto, FilterSubmissionsRequestDto, SubmitQuizDto } from './dtos';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminAbilitiesGuard } from '@modules/admin/guards';
 
@@ -27,17 +27,28 @@ export class QuizController {
     return { message: '✅ Crawling completed manually' };
   }
 
-  // @Patch("update-duration")
-  // async updateQuizDurations() {
-  //   return this.quizService.updateQuizDurations();
-  // }
-
   @Post("submit/:quizId")
   @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)
   async submitQuiz(@CurrentUser("id") candidateId: string, @Param("quizId") quizId: string, @Body() body: SubmitQuizDto): Promise<ResponseType> {
     return this.quizService.submit(quizId, candidateId, body);
+  }
+
+  @Post("create-quiz")
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.RECRUITER)
+  @ApiOkResponseCustom(ResponseType)
+  async createQuiz(@CurrentUser("id") userId: string, @Body() body: CreateQuizDto): Promise<ResponseType> {
+    return this.quizService.createQuiz(userId, body);
+  }
+
+  @Patch("update-quiz/:quizId")
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.RECRUITER)
+  @ApiOkResponseCustom(ResponseType)
+  async updateQuiz(@CurrentUser("id") userId: string, @Param("quizId") quizId: string, @Body() body: CreateQuizDto): Promise<ResponseType> {
+    return this.quizService.updateQuiz(userId, quizId, body);
   }
 
   @Get("getListSubmissions")
