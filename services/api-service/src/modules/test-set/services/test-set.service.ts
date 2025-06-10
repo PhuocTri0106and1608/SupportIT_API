@@ -3,7 +3,6 @@ import { ResponseType } from "@common/dtos";
 import { CodeResponseEnum } from "@common/enums";
 import { TestSetRepository } from "../repositories";
 import { RedisService } from "@modules/redis";
-import { Types } from "mongoose";
 import { LeetCodeProblemRepository } from '../../leetcode/repositories/leetcode-problem.repository';
 import { TestSet } from "../schemas";
 import { QuizRepository } from "@modules/quizz/repositories";

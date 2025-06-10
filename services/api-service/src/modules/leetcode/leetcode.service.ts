@@ -4,7 +4,8 @@ import { ResponseType } from '@common/dtos';
 import { CodeResponseEnum } from '@common/enums';
 import { RedisService } from '@modules/redis/redis.service';
 import { plainToClass } from 'class-transformer';
-import { LeetCodeProblemResponseDto, ProblemPaginationResponseDto } from './dtos';
+import { CreateLeetCodeProblemDto, LeetCodeProblemResponseDto, ProblemPaginationResponseDto } from './dtos';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class LeetCodeService {
@@ -68,18 +69,9 @@ export class LeetCodeService {
     page: number = 1,
     limit: number = 10,
     difficulty?: string,
-    tag?: string
+    tag?: string,
+    creatorUserId?: string
   ): Promise<ResponseType> {
-    const cacheKey = `${this.CACHE_KEY_PREFIX}problems:page:${page}:limit:${limit}:difficulty:${difficulty || 'all'}:tag:${tag || 'all'}`;
-    const cachedResult = await this.redisService.get(cacheKey);
-
-    if (cachedResult) {
-      return {
-        code: CodeResponseEnum.SUCCESS,
-        data: cachedResult,
-      };
-    }
-
     const skip = (page - 1) * limit;
     const filter: any = {};
 
@@ -89,6 +81,10 @@ export class LeetCodeService {
 
     if (tag) {
       filter.topicTags = tag;
+    }
+
+    if (creatorUserId) {
+      filter.creatorUserId = creatorUserId;
     }
 
     const [problems, total] = await Promise.all([
@@ -115,8 +111,6 @@ export class LeetCodeService {
     const transformedResult = plainToClass(ProblemPaginationResponseDto, result, {
       excludeExtraneousValues: true
     });
-
-    await this.redisService.set(cacheKey, transformedResult, { ttl: this.CACHE_TTL_SECONDS });
 
     return {
       code: CodeResponseEnum.SUCCESS,
@@ -151,6 +145,30 @@ export class LeetCodeService {
     return {
       code: CodeResponseEnum.SUCCESS,
       data: tags,
+    };
+  }
+
+  async createProblem(creatorUserId: string, problemData: CreateLeetCodeProblemDto): Promise<ResponseType> {
+    const newProblem = await this.leetCodeProblemRepository.create({
+      ...problemData,
+      creatorUserId,
+    });
+
+    return {
+      code: CodeResponseEnum.SUCCESS,
+      data: newProblem,
+    };
+  }
+
+  async updateProblem(creatorUserId: string, id: string, updateData: Partial<CreateLeetCodeProblemDto>): Promise<ResponseType> {
+    const updatedProblem = await this.leetCodeProblemRepository.findOneAndUpdate({ _id: new Types.ObjectId(id)}, updateData);
+    if (!updatedProblem) {
+      throw new NotFoundException(`Problem with ID ${id} not found`);
+    }
+
+    return {
+      code: CodeResponseEnum.SUCCESS,
+      data: updatedProblem,
     };
   }
 

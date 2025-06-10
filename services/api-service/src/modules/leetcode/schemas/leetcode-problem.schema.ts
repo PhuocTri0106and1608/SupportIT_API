@@ -28,7 +28,7 @@ export class LeetCodeProblem extends BaseSchema {
   topicTags: string[];
 
   @Prop([String])
-  hints: string[];
+  hints?: string[];
 
   @Prop([
     {
@@ -43,7 +43,7 @@ export class LeetCodeProblem extends BaseSchema {
   }[];
 
   @Prop()
-  sourceUrl: string;
+  sourceUrl?: string;
 
   @Prop([
     {

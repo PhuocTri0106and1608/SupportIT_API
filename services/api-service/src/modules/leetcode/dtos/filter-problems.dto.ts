@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -9,32 +9,37 @@ export enum DifficultyEnum {
 }
 
 export class FilterProblemsRequestDto {
-  @ApiProperty({ required: false, default: 1 })
+  @ApiPropertyOptional({ default: 1 })
   @IsNumber()
   @Min(1)
   @IsOptional()
   @Type(() => Number)
   page?: number = 1;
 
-  @ApiProperty({ required: false, default: 10 })
+  @ApiPropertyOptional({ default: 10 })
   @IsNumber()
   @Min(1)
   @IsOptional()
   @Type(() => Number)
   limit?: number = 10;
 
-  @ApiProperty({ required: false, enum: DifficultyEnum })
+  @ApiPropertyOptional({ enum: DifficultyEnum })
   @IsEnum(DifficultyEnum)
   @IsOptional()
   difficulty?: DifficultyEnum;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({})
   @IsString()
   @IsOptional()
   tag?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({})
   @IsString()
   @IsOptional()
   search?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  creatorUserId?: string;
 } 

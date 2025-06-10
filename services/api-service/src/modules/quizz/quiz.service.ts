@@ -177,16 +177,6 @@ export class QuizService {
         filter["creatorUserId"] = creatorUserId;
       }
 
-      const cacheKey = `quizzes:list:page=${page}:limit=${limit}:category=${category || 'all'}:creatorUserId=${creatorUserId || 'all'}`;
-
-      const cached = await this.redisService.get<any>(cacheKey);
-      if (cached) {
-        return {
-          code: CodeResponseEnum.SUCCESS,
-          data: cached,
-        };
-      }
-
       const selectFields: Record<string, 0 | 1> = {
         'questions.correctAnswer': 0,
         'questions.explanation': 0,
@@ -206,8 +196,6 @@ export class QuizService {
           totalPages: Math.ceil(total / limit),
         },
       };
-
-      await this.redisService.set(cacheKey, resultData, { ttl: 60 * 60 * 60 });
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -260,8 +248,6 @@ export class QuizService {
         throw new HttpException("Failed to create quiz", HttpStatus.INTERNAL_SERVER_ERROR);
       }
 
-      await this.redisService.del(`quizzes:list:page=1:limit=10:category=all`);
-
       return {
         code: CodeResponseEnum.SUCCESS,
         data: newQuiz,
@@ -280,7 +266,6 @@ export class QuizService {
         throw new HttpException("Quiz not found or update failed", HttpStatus.NOT_FOUND);
       }
       await this.redisService.del(`quizzes:${id}`);
-      await this.redisService.del(`quizzes:list:page=1:limit=10:category=all:creatorUserId=${creatorUserId}`);
       return {
         code: CodeResponseEnum.SUCCESS,
         data: updatedQuiz,
