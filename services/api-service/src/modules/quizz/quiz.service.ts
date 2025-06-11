@@ -171,7 +171,7 @@ export class QuizService {
     try {
       const filter: any = { deletedAt: null };
       if (category) {
-        filter["categories"] = { $in: [category] };
+        filter["categories"] = category;
       }
       if (creatorUserId) {
         filter["creatorUserId"] = creatorUserId;
