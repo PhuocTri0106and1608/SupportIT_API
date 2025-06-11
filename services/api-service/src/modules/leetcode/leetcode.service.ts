@@ -142,7 +142,7 @@ export class LeetCodeService {
 
     const tags = Array.from(tagsSet).sort();
 
-    await this.redisService.set(cacheKey, tags, { ttl: this.CACHE_TTL_SECONDS });
+    await this.redisService.set(cacheKey, tags);
 
     return {
       code: CodeResponseEnum.SUCCESS,

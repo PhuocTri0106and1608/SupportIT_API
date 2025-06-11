@@ -151,7 +151,7 @@ export class QuizService {
 
       const categoryTree = buildTree(categoryPaths);
 
-      await this.redisService.set(cacheKey, categoryTree, { ttl: 60 * 60 * 60 });
+      await this.redisService.set(cacheKey, categoryTree);
 
       return {
         code: CodeResponseEnum.SUCCESS,
