@@ -171,10 +171,12 @@ export class QuizService {
     try {
       const filter: any = { deletedAt: null };
       if (category) {
-        filter["categories"] = category;
+        filter["categories"] = { $in: [category] };
       }
       if (creatorUserId) {
         filter["creatorUserId"] = creatorUserId;
+      } else {
+        filter["creatorUserId"] = { $exists: false }; // Only include problems without a creator
       }
 
       const selectFields: Record<string, 0 | 1> = {

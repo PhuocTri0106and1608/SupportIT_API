@@ -80,11 +80,13 @@ export class LeetCodeService {
     }
 
     if (tag) {
-      filter.topicTags = tag;
+      filter.topicTags = { $in: [tag] };
     }
 
     if (creatorUserId) {
       filter.creatorUserId = creatorUserId;
+    } else {
+      filter.creatorUserId = { $exists: false }; // Only include problems without a creator
     }
 
     const [problems, total] = await Promise.all([
