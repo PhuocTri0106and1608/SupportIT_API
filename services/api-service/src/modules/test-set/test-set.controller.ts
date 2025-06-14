@@ -41,11 +41,11 @@ export class TestSetController {
     return this.testSetService.updateTestSetByJD(dto);
   }
 
-  @Post("startTestSet")
+  @Post("startTestSet/:testSetId")
   @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)
-  async startTestSet(@CurrentUser("id") candidateId: string, @Body("testSetId") testSetId: string): Promise<ResponseType> {
+  async startTestSet(@CurrentUser("id") candidateId: string, @Param("testSetId") testSetId: string): Promise<ResponseType> {
     return this.testSetResultService.startTestSet({candidateId, testSetId});
   }
 
@@ -82,12 +82,12 @@ export class TestSetController {
     });
   }
 
-  @Post("submitFinalTestSet")
+  @Post("submitFinalTestSet/:testSetId")
   @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)
   async submitFinalTestSet(
-    @Body("testSetResultId") testSetResultId: string,
+    @Param("testSetResultId") testSetResultId: string,
   ): Promise<ResponseType> {
     return this.testSetResultService.submitFinalTestSet(testSetResultId);
   }

@@ -8,7 +8,7 @@ import {
   IsIn,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PartialType } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
 class ParamDto {
   @IsString()
@@ -50,33 +50,40 @@ class CodeSnippetDto {
 
 export class CreateLeetCodeProblemDto {
   @IsString()
+  @ApiProperty()
   @IsNotEmpty()
   title: string;
 
   @IsString()
+  @ApiProperty()
   @IsNotEmpty()
   titleSlug: string;
 
   @IsString()
+    @ApiProperty()
   @IsNotEmpty()
   @IsIn(['Easy', 'Medium', 'Hard'], { message: 'Difficulty must be one of Easy, Medium, Hard' })
   difficulty: string;
 
   @IsString()
+  @ApiProperty()
   @IsNotEmpty()
   content: string;
 
   @IsOptional()
+    @ApiPropertyOptional()
   @IsArray()
   @IsString({ each: true })
   topicTags?: string[];
 
   @IsOptional()
+  @ApiPropertyOptional()
   @IsArray()
   @IsString({ each: true })
   hints?: string[];
 
   @IsOptional()
+  @ApiProperty()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CodeSnippetDto)
@@ -84,6 +91,7 @@ export class CreateLeetCodeProblemDto {
 
   @IsOptional()
   @IsArray()
+  @ApiProperty()
   @ValidateNested({ each: true })
   @Type(() => TestcaseDto)
   testcases?: TestcaseDto[];

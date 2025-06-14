@@ -10,42 +10,50 @@ import {
   ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PartialType } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 class QuestionDto {
   @IsString()
+  @ApiProperty()
   @IsNotEmpty()
   question: string;
 
   @IsArray()
+  @ApiProperty()
   @ArrayMinSize(2)
   @IsString({ each: true })
   options: string[];
 
   @IsNumber()
   @Min(0)
+  @ApiProperty()
   correctAnswer: number;
 
   @IsOptional()
   @IsString()
+  @ApiProperty()
   explanation?: string;
 }
 
 export class CreateQuizDto {
   @IsString()
   @IsNotEmpty()
+  @ApiProperty()
   title: string;
 
   @IsArray()
   @ArrayNotEmpty()
+  @ApiProperty()
   @IsString({ each: true })
   categories: string[];
 
   @IsString()
   @IsNotEmpty()
+  @ApiProperty()
   sourceUrl: string;
 
   @IsArray()
+  @ApiProperty()
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => QuestionDto)
@@ -54,6 +62,7 @@ export class CreateQuizDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  @ApiProperty()
   duration?: number;
 }
 
