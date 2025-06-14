@@ -3,6 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { FilterQuery, Model } from "mongoose";
 import { Application } from "../schemas";
+import { Types } from "mongoose";
 
 @Injectable()
 export class ApplicationRepository extends BaseMongoRepository<Application> {
@@ -88,5 +89,83 @@ export class ApplicationRepository extends BaseMongoRepository<Application> {
     ];
 
     return this._model.aggregate(pipeline).exec();
+  }
+
+
+  async findApplicationById(id: string): Promise<any> {
+      const pipeline = [
+        {
+          $match: {
+            _id: new Types.ObjectId(id)
+          }
+        },
+        {
+          $addFields: {
+            cvObjectId: { $toObjectId: "$cvId" },
+            jdObjectId: { $toObjectId: "$jdId" },
+            evaluationObjectId: { $toObjectId: "$evaluationId" }
+          }
+        },
+        {
+          $lookup: {
+            from: 'cvs',
+            localField: 'cvObjectId',
+            foreignField: '_id',
+            as: 'cvDetails'
+          }
+        },
+        {
+          $lookup: {
+            from: 'jds',
+            localField: 'jdObjectId',
+            foreignField: '_id',
+            as: 'jdDetails'
+          }
+        },
+        {
+          $lookup: {
+            from: 'evaluations',
+            localField: 'evaluationObjectId',
+            foreignField: '_id',
+            as: 'evaluationDetails'
+          }
+        },
+        {
+          $unwind: {
+            path: '$cvDetails',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $unwind: {
+            path: '$jdDetails',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $unwind: {
+            path: '$evaluationDetails',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            candidateId: 1,
+            cvId: 1,
+            jdId: 1,
+            evaluationId: 1,
+            overallScore: 1,
+            status: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            cv: '$cvDetails',
+            jd: '$jdDetails',
+            evaluation: '$evaluationDetails'
+          }
+        }
+      ];
+
+    return this._model.aggregate(pipeline);
   }
 }

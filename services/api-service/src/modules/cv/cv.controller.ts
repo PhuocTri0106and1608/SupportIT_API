@@ -9,13 +9,13 @@ import { MediaService } from "@modules/media/media.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AnyRoleGuard } from "@modules/auth/guards";
 import { LoginRoleEnum } from "@common/enums";
-import { CreateJdDto, CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, UpdateApplicationStatusDto } from "./dtos";
+import { CreateJdDto, CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, UpdateApplicationStatusDto, UpdateJdDto } from "./dtos";
 import { IAuthPayload } from "@modules/auth/interfaces";
 
 @Controller("cvs")
 @ApiTags("CVs")
 @ApiBearerAuth("access-token")
-@UseGuards(AuthGuard, AnyRoleGuard)
+// @UseGuards(AuthGuard, AnyRoleGuard)
 export class CVController {
   constructor(
     private readonly cvService: CVService,
@@ -28,6 +28,16 @@ export class CVController {
     @Body() jd: CreateJdDto
   ): Promise<ResponseType> {
     return this.cvService.uploadJD({ jd, userId: user.id, role: user.loginRole });
+  }
+
+  @Patch('updateJD/:jdId')
+  @AnyRole(LoginRoleEnum.RECRUITER)
+  async updateJD(
+    @CurrentUser() user: IAuthPayload,
+    @Param('jdId') jdId: string,
+    @Body() jd: UpdateJdDto
+  ): Promise<ResponseType> {
+    return this.cvService.updateJD({ jdId, jd, userId: user.id, role: user.loginRole });
   }
 
   @Post('uploadCV')

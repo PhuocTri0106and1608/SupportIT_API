@@ -2,7 +2,7 @@ import { CodeResponseEnum, LoginRoleEnum } from "@common/enums";
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { ApplicationRepository, CVRepository, EvaluationRepository, JDRepository } from "./repositories";
 import { CV, CVDocument, EvaluationDocument, JD, JDDocument } from "./schemas";
-import { CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, CreateJdDto } from "./dtos";
+import { CVUploadDto, FilterApplicationsRequestDto, FilterCVsRequestDto, FilterEvaluationsRequestDto, FilterJDsRequestDto, CreateJdDto, UpdateJdDto } from "./dtos";
 import axios from "axios";
 import { ResponseType } from "@common/dtos";
 import { CandidateRepository } from "@modules/candidate/repositories";
@@ -55,6 +55,33 @@ export class CVService {
       };
     } catch (error) {
       throw new HttpException("uploadJD error", HttpStatus.INTERNAL_SERVER_ERROR, {
+        cause: error,
+      });
+    }
+  }
+
+  async updateJD(request: { jdId: string, jd: UpdateJdDto, userId: string, role: LoginRoleEnum }): Promise<ResponseType> {
+    const { jdId, jd, userId, role } = request;
+    const isRecruiter = role === LoginRoleEnum.RECRUITER;
+    try {
+      const updatedJD = await this.jdRepository.findOneAndUpdate({ _id: new Types.ObjectId(jdId) }, jd);
+
+      await this.redisService.set(`jd:${updatedJD._id}`, updatedJD, { ttl: 3600 });
+      if (isRecruiter && jd.visibility === "public") {
+        const jdDataForQueue = JSON.parse(JSON.stringify(updatedJD));
+
+        this.recombeeQueueService.addJdToRecombee({ jd: jdDataForQueue });
+        this.recombeeQueueService.createJobIdealCandidateInRecombee({
+          jdId: updatedJD._id.toString(),
+        });
+      }
+
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: updatedJD,
+      };
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR, {
         cause: error,
       });
     }
@@ -454,7 +481,7 @@ export class CVService {
   }
   async getApplicationById(id: string): Promise<ResponseType> {
     try {
-      const application = await this.applicationRepository.findById(id);
+      const application = await this.applicationRepository.findApplicationById(id);
 
       if (!application) {
         return {

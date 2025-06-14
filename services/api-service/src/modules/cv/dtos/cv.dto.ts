@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsIn, IsObject, IsOptional, IsString, ValidateNested, } from 'class-validator';
 import { Type } from 'class-transformer';
 import { BaseInformationDto } from '@common/dtos';
@@ -43,7 +43,9 @@ export class CreateJdDto {
 
   @Type(() => BaseInformationDto)
   @ValidateNested()
-  @ApiProperty()
+  @ApiProperty({
+    type: BaseInformationDto
+  })
   @IsObject()
   requirements: BaseInformationDto;
 
@@ -57,3 +59,5 @@ export class CreateJdDto {
   @IsEnum(['private', 'public'])
   visibility?: 'private' | 'public';
 }
+
+export class UpdateJdDto extends PartialType(CreateJdDto) {}
