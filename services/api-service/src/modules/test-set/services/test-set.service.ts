@@ -83,17 +83,25 @@ export class TestSetService {
         this.problemRepository.find({ _id: { $in: testSet.problemIds } }),
       ]);
 
-      const transformedQuizzes = quizzes.map(problem =>
-        plainToClass(QuizResponseDto, problem, {
+      const transformedQuizzes = quizzes.map(quiz => {
+        const plainQuiz = {
+          ...quiz,
+          _id: quiz._id.toString()
+        };
+        return plainToClass(QuizResponseDto, plainQuiz, {
           excludeExtraneousValues: true
-        })
-      );
+        });
+      });
 
-      const transformedProblems = problems.map(problem =>
-        plainToClass(LeetCodeProblemResponseDto, problem, {
+      const transformedProblems = problems.map(problem => {
+        const plainProblem = {
+          ...problem,
+          _id: problem._id.toString()
+        };
+        return plainToClass(LeetCodeProblemResponseDto, plainProblem, {
           excludeExtraneousValues: true
-        })
-      );
+        });
+      });
 
       const fullTestSet = {
         creatorUserId: testSet.creatorUserId,
@@ -140,17 +148,25 @@ export class TestSetService {
         this.problemRepository.find({ _id: { $in: testSet.problemIds } }),
       ]);
 
-      const transformedQuizzes = quizzes.map(problem =>
-        plainToClass(QuizResponseDto, problem, {
+      const transformedQuizzes = quizzes.map(quiz => {
+        const plainQuiz = {
+          ...quiz,
+          _id: quiz._id.toString()
+        };
+        return plainToClass(QuizResponseDto, plainQuiz, {
           excludeExtraneousValues: true
-        })
-      );
+        });
+      });
 
-      const transformedProblems = problems.map(problem =>
-        plainToClass(LeetCodeProblemResponseDto, problem, {
+      const transformedProblems = problems.map(problem => {
+        const plainProblem = {
+          ...problem,
+          _id: problem._id.toString()
+        };
+        return plainToClass(LeetCodeProblemResponseDto, plainProblem, {
           excludeExtraneousValues: true
-        })
-      );
+        });
+      });
 
       const fullTestSet = {
         creatorUserId: testSet.creatorUserId,

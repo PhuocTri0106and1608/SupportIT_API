@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 
 export class LeetCodeProblemResponseDto {
   @Expose()
   @ApiProperty()
+  @Transform(({ value }) => typeof value === 'object' ? value.toString() : value)
   _id: string;
 
   @Expose()

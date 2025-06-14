@@ -75,7 +75,7 @@ export class TestSetResultService {
         data: testSetResult,
       };
     } catch (error) {
-      throw new HttpException("submitQuizTestSet error", HttpStatus.INTERNAL_SERVER_ERROR, {
+      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR, {
         cause: error,
       });
     }
@@ -130,13 +130,14 @@ export class TestSetResultService {
       if (!testSetResult) {
         throw new HttpException("TestSetResult not found", HttpStatus.NOT_FOUND);
       }
-
+      console.log({ testSetResult})
       const quizScore = (testSetResult.totalQuizScore / testSetResult.completedQuizIds.length) || 0;
       const codingScore = (testSetResult.totalPassedCodingProblems / testSetResult.totalCodingProblems) || 0;
       const finalScore = (quizScore + codingScore) / 2;
 
       const endAt: Date = new Date();
-      const actualDuration = Math.floor((endAt.getTime() - testSetResult.startedAt.getTime()) / 1000);
+      const startedAt: Date = new Date(testSetResult.startedAt)
+      const actualDuration = Math.floor((endAt.getTime() - startedAt.getTime()) / 1000);
 
       testSetResult = await this.testSetResultRepository.findOneAndUpdate(
         { _id: new Types.ObjectId(id) },

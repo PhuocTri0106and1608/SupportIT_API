@@ -1,6 +1,6 @@
 import { PageOptionsDto } from "@common/dtos";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Expose } from "class-transformer";
+import { Expose, Transform } from "class-transformer";
 import { IsOptional, IsString } from "class-validator";
 
 export class FilterQuizzesRequestDto extends PageOptionsDto {
@@ -18,6 +18,7 @@ export class FilterQuizzesRequestDto extends PageOptionsDto {
 export class QuizResponseDto {
   @Expose()
   @ApiProperty()
+  @Transform(({ value }) => typeof value === 'object' ? value.toString() : value)
   _id: string;
 
   @Expose()

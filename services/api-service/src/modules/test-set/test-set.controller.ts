@@ -82,7 +82,7 @@ export class TestSetController {
     });
   }
 
-  @Post("submitFinalTestSet/:testSetId")
+  @Post("submitFinalTestSet/:testSetResultId")
   @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)

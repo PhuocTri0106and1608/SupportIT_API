@@ -67,7 +67,7 @@ export class QuizService {
         },
       };
     } catch (error) {
-      throw new HttpException("submit error", HttpStatus.INTERNAL_SERVER_ERROR, {
+      throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR, {
         cause: error,
       });
     }
