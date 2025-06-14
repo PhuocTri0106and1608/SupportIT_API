@@ -1,4 +1,4 @@
-import { CodeResponseEnum } from "@common/enums";
+import { CodeResponseEnum, LoginRoleEnum } from "@common/enums";
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { ApplicationRepository, CVRepository, EvaluationRepository, JDRepository } from "./repositories";
 import { CV, CVDocument, EvaluationDocument, JD, JDDocument } from "./schemas";
@@ -29,9 +29,9 @@ export class CVService {
     private readonly redisService: RedisService,
   ) { }
 
-  async uploadJD(request: { jd: CreateJdDto, userId: string, isRecruiter: boolean }): Promise<ResponseType> {
-    const { jd, userId, isRecruiter } = request;
-
+  async uploadJD(request: { jd: CreateJdDto, userId: string, role: LoginRoleEnum }): Promise<ResponseType> {
+    const { jd, userId, role } = request;
+    const isRecruiter = role === LoginRoleEnum.RECRUITER;
     try {
       const createdJD = await this.jdRepository.create({
         ...jd,

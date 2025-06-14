@@ -47,11 +47,6 @@ export class CreateQuizDto {
   @IsString({ each: true })
   categories: string[];
 
-  @IsString()
-  @IsNotEmpty()
-  @ApiProperty()
-  sourceUrl: string;
-
   @IsArray()
   @ApiProperty({
     type: [QuestionDto],
