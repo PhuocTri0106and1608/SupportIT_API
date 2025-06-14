@@ -53,7 +53,9 @@ export class CreateQuizDto {
   sourceUrl: string;
 
   @IsArray()
-  @ApiProperty()
+  @ApiProperty({
+    type: [QuestionDto],
+  })
   @ArrayNotEmpty()
   @ValidateNested({ each: true })
   @Type(() => QuestionDto)

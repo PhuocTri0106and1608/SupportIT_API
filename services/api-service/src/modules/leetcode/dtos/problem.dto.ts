@@ -12,38 +12,48 @@ import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
 class ParamDto {
   @IsString()
+  @ApiProperty()
   @IsNotEmpty()
   name: string;
 
   @IsString()
   @IsNotEmpty()
+  @ApiProperty()
   type: string;
 
   @IsString()
+  @ApiProperty()
   value: string;
 }
 
 class TestcaseDto {
   @IsArray()
+  @ApiProperty({
+    type: [ParamDto],
+  })
   @ValidateNested({ each: true })
   @Type(() => ParamDto)
   params: ParamDto[];
 
   @IsString()
+  @ApiProperty()
   @IsNotEmpty()
   expected: string;
 
   @IsOptional()
+  @ApiProperty()
   @IsString()
   explanation?: string;
 }
 
 class CodeSnippetDto {
   @IsString()
+  @ApiProperty()
   @IsNotEmpty()
   language: string;
 
   @IsString()
+  @ApiProperty()
   @IsNotEmpty()
   code: string;
 }
@@ -83,7 +93,9 @@ export class CreateLeetCodeProblemDto {
   hints?: string[];
 
   @IsOptional()
-  @ApiProperty()
+  @ApiProperty({
+    type: [CodeSnippetDto],
+    })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CodeSnippetDto)
@@ -91,7 +103,9 @@ export class CreateLeetCodeProblemDto {
 
   @IsOptional()
   @IsArray()
-  @ApiProperty()
+  @ApiProperty({
+    type: [TestcaseDto],
+  })
   @ValidateNested({ each: true })
   @Type(() => TestcaseDto)
   testcases?: TestcaseDto[];
