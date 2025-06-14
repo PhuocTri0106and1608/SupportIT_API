@@ -331,7 +331,7 @@ export class CVService {
       }
 
       const [applications, total] = await Promise.all([
-        this.applicationRepository.findWithPaginationAndSort(filter, skip, limit),
+        this.applicationRepository.findWithDetailsAndPagination(filter, skip, limit),
         this.applicationRepository.countDocuments(filter),
       ]);
 
