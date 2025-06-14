@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@common/guards';
 import { AnyRoleGuard } from '@modules/auth/guards';
 import { LoginRoleEnum } from '@common/enums';
@@ -33,7 +33,7 @@ export class TestSetController {
     return this.testSetService.getTestSetByJD(jdId);
   }
 
-  @Get("updateTestSet")
+  @Patch("updateTestSet")
   @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.RECRUITER)
   @ApiOkResponseCustom(ResponseType)

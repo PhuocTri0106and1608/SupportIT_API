@@ -84,13 +84,13 @@ export class TestSetService {
       ]);
 
       const transformedQuizzes = quizzes.map(problem =>
-        plainToClass(QuizResponseDto, problem.toObject(), {
+        plainToClass(QuizResponseDto, problem, {
           excludeExtraneousValues: true
         })
       );
 
       const transformedProblems = problems.map(problem =>
-        plainToClass(LeetCodeProblemResponseDto, problem.toObject(), {
+        plainToClass(LeetCodeProblemResponseDto, problem, {
           excludeExtraneousValues: true
         })
       );
@@ -141,13 +141,13 @@ export class TestSetService {
       ]);
 
       const transformedQuizzes = quizzes.map(problem =>
-        plainToClass(QuizResponseDto, problem.toObject(), {
+        plainToClass(QuizResponseDto, problem, {
           excludeExtraneousValues: true
         })
       );
 
       const transformedProblems = problems.map(problem =>
-        plainToClass(LeetCodeProblemResponseDto, problem.toObject(), {
+        plainToClass(LeetCodeProblemResponseDto, problem, {
           excludeExtraneousValues: true
         })
       );
