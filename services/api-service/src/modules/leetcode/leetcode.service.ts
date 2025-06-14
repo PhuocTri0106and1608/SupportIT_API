@@ -4,7 +4,7 @@ import { ResponseType } from '@common/dtos';
 import { CodeResponseEnum } from '@common/enums';
 import { RedisService } from '@modules/redis/redis.service';
 import { plainToClass } from 'class-transformer';
-import { CreateLeetCodeProblemDto, LeetCodeProblemResponseDto, ProblemPaginationResponseDto } from './dtos';
+import { CreateLeetCodeProblemDto, LeetCodeProblemResponseDto, ProblemPaginationResponseDto, UpdateLeetCodeProblemDto } from './dtos';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -150,19 +150,21 @@ export class LeetCodeService {
     };
   }
 
-  async createProblem(creatorUserId: string, problemData: CreateLeetCodeProblemDto): Promise<ResponseType> {
-    const newProblem = await this.leetCodeProblemRepository.create({
-      ...problemData,
-      creatorUserId,
-    });
+    async createProblem(creatorUserId: string, problemData: CreateLeetCodeProblemDto): Promise<ResponseType> {
+      const problemId = Date.now() + Math.floor(Math.random() * 1000);
+      const newProblem = await this.leetCodeProblemRepository.create({
+        ...problemData,
+        creatorUserId,
+        problemId
+      });
 
-    return {
-      code: CodeResponseEnum.SUCCESS,
-      data: newProblem,
-    };
-  }
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: newProblem,
+      };
+    }
 
-  async updateProblem(creatorUserId: string, id: string, updateData: Partial<CreateLeetCodeProblemDto>): Promise<ResponseType> {
+  async updateProblem(creatorUserId: string, id: string, updateData: UpdateLeetCodeProblemDto): Promise<ResponseType> {
     const updatedProblem = await this.leetCodeProblemRepository.findOneAndUpdate({ _id: new Types.ObjectId(id)}, updateData);
     if (!updatedProblem) {
       throw new NotFoundException(`Problem with ID ${id} not found`);

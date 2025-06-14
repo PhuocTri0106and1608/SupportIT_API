@@ -49,10 +49,6 @@ class CodeSnippetDto {
 }
 
 export class CreateLeetCodeProblemDto {
-  @IsNumber()
-  @IsNotEmpty()
-  problemId: number;
-
   @IsString()
   @IsNotEmpty()
   title: string;
