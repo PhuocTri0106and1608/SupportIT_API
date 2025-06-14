@@ -27,7 +27,7 @@ export class CVController {
     @CurrentUser() user: IAuthPayload,
     @Body() jd: CreateJdDto
   ): Promise<ResponseType> {
-    return this.cvService.uploadJD({ jd, userId: user.id, isRecruiter: user.canBeRecruiter });
+    return this.cvService.uploadJD({ jd, userId: user.id, role: user.loginRole });
   }
 
   @Post('uploadCV')
