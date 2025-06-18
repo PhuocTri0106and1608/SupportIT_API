@@ -1,0 +1,55 @@
+name: Deploy NestJS to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - dev
+
+env:
+  GCP_REGION: asia-southeast1 # Thay bằng region của bạn
+  ARTIFACT_REGISTRY_REPO: nestjs-services # Tên repository trên Artifact Registry
+  CLOUD_RUN_SERVICE: support-it-api # Tên service bạn muốn đặt trên Cloud Run
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+
+      - name: Build and Push Docker Image
+        env:
+          IMAGE_URL: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.CLOUD_RUN_SERVICE }}:${{ github.sha }}
+        run: |
+          docker build -t $IMAGE_URL .
+          docker push $IMAGE_URL
+
+      - name: Deploy to Cloud Run
+        env:
+          IMAGE_URL: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.CLOUD_RUN_SERVICE }}:${{ github.sha }}
+        run: |
+          gcloud run deploy ${{ env.CLOUD_RUN_SERVICE }} \
+            --image $IMAGE_URL \
+            --platform managed \
+            --region ${{ env.GCP_REGION }} \
+            --allow-unauthenticated \
+            --port 3000
