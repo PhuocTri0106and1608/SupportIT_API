@@ -40,7 +40,7 @@ jobs:
         env:
           IMAGE_URL: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.CLOUD_RUN_SERVICE }}:${{ github.sha }}
         run: |
-          docker build -t $IMAGE_URL .
+          docker build -t $IMAGE_URL -f services/api-service/Dockerfile services/api-service
           docker push $IMAGE_URL
 
       - name: Deploy to Cloud Run
