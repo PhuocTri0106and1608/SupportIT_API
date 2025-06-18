@@ -33,6 +33,8 @@ jobs:
         run: |
           echo "Auth output project_id: ${{ steps.auth.outputs.project_id }}"
           echo "Auth output service_account_email: ${{ steps.auth.outputs.service_account_email }}"
+          echo "Auth input workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          echo "Auth input service_account_email: ${{ secrets.GCP_SERVICE_ACCOUNT }}"
           echo "Auth output access_token: ${{ steps.auth.outputs.access_token }}" # Cẩn thận với access_token, nó nhạy cảm
           # Có thể ${{ steps.auth.outputs.id_token }} là cái chúng ta cần kiểm tra
           echo "Auth output id_token: ${{ steps.auth.outputs.id_token }}"
