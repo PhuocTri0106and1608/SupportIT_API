@@ -30,6 +30,16 @@ jobs:
           workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
 
+      - name: Debug OIDC Token Subject
+        run: |
+          TOKEN=$(gcloud auth print-access-token --impersonate-service-account=${{ secrets.GCP_SERVICE_ACCOUNT }})
+          echo "GitHub OIDC ID Token: ${{ steps.auth.outputs.id_token }}"
+          echo "Expected GitHub OIDC subject (sub claim): repo:${{ github.repository }}:ref:refs/heads/${{ github.ref_name }}"
+          echo "Actual GitHub OIDC ID token payload (base64 decoded):"
+          echo "${{ steps.auth.outputs.id_token }}" | cut -d '.' -f 2 | base64 -d 2>/dev/null || echo "Could not decode ID token payload."
+        # Lưu ý: id_token chỉ được cấp khi permissions.id-token: write được khai báo.
+        # Bạn đã có nó, nên nó sẽ hoạt động.
+        # Xóa bước này sau khi debug xong!
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
