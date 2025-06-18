@@ -1,0 +1,11 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/support-it-nest-463304/template-service']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/support-it-nest-463304/template-service']
+  - name: 'gcr.io/cloud-builders/gke-deploy'
+    args:
+      - 'deploy'
+      - '--cluster-name=template-cluster'
+      - '--location=us-central1'
+      - '--yaml-file=deployment.yaml'
