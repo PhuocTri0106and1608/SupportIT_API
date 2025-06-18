@@ -5,9 +5,6 @@ COPY package.json package-lock.json ./
 RUN npm install --legacy-peer-deps
 COPY . .
 
-# Tăng heap lên 2GB để tránh lỗi out of memory
-ENV NODE_OPTIONS=--max_old_space_size=2048
-
 RUN npm run build
 
 # Production stage
