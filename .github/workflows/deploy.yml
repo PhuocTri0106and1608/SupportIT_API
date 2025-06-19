@@ -75,5 +75,4 @@ jobs:
             --image $IMAGE_URL \
             --platform managed \
             --region ${{ env.GCP_REGION }} \
-            --allow-unauthenticated \
-            --port 3000
+            --allow-unauthenticated

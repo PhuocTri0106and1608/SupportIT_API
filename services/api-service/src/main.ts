@@ -37,7 +37,8 @@ async function bootstrap() {
     setupSwagger(app);
     logger.info("Started setting up swagger");
 
-    await app.listen(env.PORT!, "0.0.0.0");
+    const port = env.PORT || 3000;
+    await app.listen(port, "0.0.0.0");
     // console.log(`Server is listening on port ${env.PORT}`);
     logger.info(`${env.SERVICE_NAME} is running on: ${await app.getUrl()}`);
 }
