@@ -9,9 +9,6 @@ env:
   GCP_REGION: asia-southeast1 # Thay bằng region của bạn
   ARTIFACT_REGISTRY_REPO: nestjs-services # Tên repository trên Artifact Registry
   CLOUD_RUN_SERVICE: support-it-api # Tên service bạn muốn đặt trên Cloud Run
-  GCP_WORKLOAD_IDENTITY_PROVIDER: projects/613848046941/locations/global/workloadIdentityPools/github-pool/providers/github-provider
-  GCP_SERVICE_ACCOUNT: github-actions-deployer@support-it-api-463404.iam.gserviceaccount.com
-  GCP_PROJECT_ID: support-it-api-463404
 
 jobs:
   build-and-deploy:
@@ -39,20 +36,12 @@ jobs:
         id: auth
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: '${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
-          service_account: '${{ env.GCP_SERVICE_ACCOUNT }}'
+          workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
           token_format: 'access_token'
           create_credentials_file: true
           export_environment_variables: true
           
-
-      - name: Verify Auth Output
-        run: |
-          echo "Auth output project_id: ${{ steps.auth.outputs.project_id }}"
-          echo "Auth output service_account_email: ${{ steps.auth.outputs.service_account_email }}"
-          echo "Auth output access_token: ${{ steps.auth.outputs.access_token }}"
-          echo "Auth output id_token: ${{ steps.auth.outputs.id_token }}"
-          echo "Auth output credentials_file_path: ${{ steps.auth.outputs.credentials_file_path }}"
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -62,14 +51,14 @@ jobs:
 
       - name: Build and Push Docker Image
         env:
-          IMAGE_URL: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.CLOUD_RUN_SERVICE }}:${{ github.sha }}
+          IMAGE_URL: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.CLOUD_RUN_SERVICE }}:${{ github.sha }}
         run: |
           docker build -t $IMAGE_URL -f services/api-service/Dockerfile services/api-service
           docker push $IMAGE_URL
 
       - name: Deploy to Cloud Run
         env:
-          IMAGE_URL: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.CLOUD_RUN_SERVICE }}:${{ github.sha }}
+          IMAGE_URL: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.CLOUD_RUN_SERVICE }}:${{ github.sha }}
         run: |
           gcloud run deploy ${{ env.CLOUD_RUN_SERVICE }} \
             --image $IMAGE_URL \
