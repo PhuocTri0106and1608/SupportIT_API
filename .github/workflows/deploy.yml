@@ -23,6 +23,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - run: echo "✅ THIS IS THE NEW YAML VERSION"
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
