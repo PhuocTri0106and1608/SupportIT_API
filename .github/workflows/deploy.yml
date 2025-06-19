@@ -29,6 +29,10 @@ jobs:
         with:
           workload_identity_provider: '${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
           service_account: '${{ secrets.GCP_SERVICE_ACCOUNT }}'
+          token_format: 'access_token'
+          create_credentials_file: true
+          export_environment_variables: true
+          debug: true
 
       - name: Verify Auth Output
         run: |
