@@ -75,4 +75,4 @@ $ docker-compose up --build
 
 - Makes some data by visiting `http://localhost:5556/docs`
 - Make some data by visiting `http://localhost:5555/docs`
-- View data in grafana by visiting `http://localhost:3000`
+- View data in grafana by visiting `http://localhost:8080`

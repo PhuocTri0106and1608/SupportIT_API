@@ -18,12 +18,12 @@ scrape_configs:
   - job_name: 'actor'
     metrics_path: /metrics
     static_configs:
-    - targets: ['actor:3000']
+    - targets: ['actor:8080']
 
   - job_name: 'movie'
     metrics_path: /metrics
     static_configs:
-    - targets: ['movie:3000']
+    - targets: ['movie:8080']
 
   - job_name: 'volume_exporter'
     metrics_path: /metrics

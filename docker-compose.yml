@@ -84,7 +84,7 @@ services:
         build: ./services/api-service
         ports:
             - 5557:5555
-            - 3000:3000
+            - 8080:8080
         volumes:
             - ./data/logs:/app/logs
         environment:
