@@ -13,6 +13,6 @@ WORKDIR /app
 COPY --from=build-stage /app/dist ./dist
 COPY --from=build-stage /app/node_modules ./node_modules
 COPY --from=build-stage /app/package.json .
-EXPOSE 3000
+EXPOSE 8080
 
 CMD ["node", "dist/src/main.js"]
