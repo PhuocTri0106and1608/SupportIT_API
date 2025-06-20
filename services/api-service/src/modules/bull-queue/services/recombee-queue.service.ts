@@ -35,7 +35,11 @@ export class RecombeeQueueService {
       const jobOptions = {
         priority: options?.priority || 1,
         delay: options?.delay || 0,
-        attempts: options?.attempts || 3,
+        attempts: options?.attempts || 5,
+        backoff: {
+          type: 'exponential',
+          delay: 1000
+        },
         removeOnComplete: options?.removeOnComplete !== undefined ? options.removeOnComplete : true,
         removeOnFail: options?.removeOnFail !== undefined ? options.removeOnFail : 50,
       };

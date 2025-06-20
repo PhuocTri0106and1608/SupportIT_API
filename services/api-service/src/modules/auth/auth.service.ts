@@ -75,7 +75,6 @@ export class AuthService {
                     roles,
                     canBeRecruiter: user.canBeRecruiter,
                 });
-                console.log("Access token", accessToken);
                 return {
                     code: CodeResponseEnum.SUCCESS,
                     data: {
