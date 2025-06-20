@@ -58,7 +58,6 @@ export class SuggestQueueService {
 
             if (!suggestResponse?.data || !suggestResponse.data?.suggested_problems || !suggestResponse.data?.suggested_quizzes || suggestResponse.data?.suggested_problems.length === 0 || suggestResponse.data?.suggested_quizzes.length === 0) {
                 logger.error("Error in handleSkillSuggestion: No data or empty arrays returned from suggest API");
-                await this.redisService.set(`suggest:userId:${userId}`, { suggested_problems: [], suggested_quizzes: [] });
                 return { result: false, error: "No suggestions found or invalid data from external API" };
             } else {
                 const suggestedProblems = suggestResponse.data.suggested_problems;
@@ -70,7 +69,6 @@ export class SuggestQueueService {
             }
         } catch (error) {
             logger.error(`Error fetching or storing suggestions for userId ${userId}: ${error.message}`);
-            await this.redisService.set(`suggest:userId:${userId}`, { suggested_problems: [], suggested_quizzes: [] });
             throw error;
         }
     }
