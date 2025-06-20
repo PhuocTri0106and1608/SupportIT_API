@@ -9,8 +9,9 @@ import { CandidateRepository } from "@modules/candidate/repositories";
 import { Types } from "mongoose";
 import { env } from "@environments";
 import { RedisService } from "@modules/redis";
-import { EmailType, MailQueueService, RecombeeQueueService } from "@modules/bull-queue";
+import { EmailType, MailQueueService, RecombeeQueueService, SuggestQueueService } from "@modules/bull-queue";
 import { UserRepository } from "@modules/user";
+import { SuggestType } from "./interfaces";
 @Injectable()
 export class CVService {
 
@@ -26,6 +27,8 @@ export class CVService {
     private readonly recombeeQueueService: RecombeeQueueService,
     @Inject(forwardRef(() => MailQueueService))
     private readonly mailQueueService: MailQueueService,
+    @Inject(forwardRef(() => SuggestQueueService))
+    private readonly suggestQueueService: SuggestQueueService,
     private readonly redisService: RedisService,
   ) { }
 
@@ -216,6 +219,10 @@ export class CVService {
         reviewCVResponse,
       });
 
+      const requestedSkills = {
+        matched_skills: reviewCVResponse.skills_analysis.matched_skills,
+        missing_skills: reviewCVResponse.skills_analysis.missing_skills
+      };
       const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
       const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
 
@@ -226,6 +233,10 @@ export class CVService {
         itemId: jd._id.toString(),
         interactionType: 'apply'
       });
+      this.suggestQueueService.addToQueue(
+        SuggestType.SKILL_SUGGESTION,
+        { userId, requestedSkills }
+      );
 
       await this.applicationRepository.create({
         candidateId: userId,
@@ -320,11 +331,19 @@ export class CVService {
         reviewCVResponse,
       });
 
+      const requestedSkills = {
+        matched_skills: reviewCVResponse.skills_analysis.matched_skills,
+        missing_skills: reviewCVResponse.skills_analysis.missing_skills
+      };
       const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
       const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
 
       this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue });
       this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue });
+      this.suggestQueueService.addToQueue(
+        SuggestType.SKILL_SUGGESTION,
+        { userId, requestedSkills }
+      );
 
       return {
         code: CodeResponseEnum.SUCCESS,

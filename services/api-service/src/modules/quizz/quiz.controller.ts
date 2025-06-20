@@ -4,7 +4,7 @@ import { QuizService } from './quiz.service';
 import { AuthGuard } from '@common/guards';
 import { AnyRoleGuard, JwtAccessTokenAuthGuard } from '@modules/auth/guards';
 import { AdminActionEnum, LoginRoleEnum, SubjectEnum } from '@common/enums';
-import { ResponseType } from '@common/dtos';
+import { PageOptionsDto, ResponseType } from '@common/dtos';
 import { AnyRole, ApiOkResponseCustom, CheckAbilites, CurrentUser } from '@common/decorators';
 import { CreateQuizDto, FilterQuizzesRequestDto, FilterSubmissionsRequestDto, SubmitQuizDto } from './dtos';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -69,6 +69,14 @@ export class QuizController {
   @ApiOkResponseCustom(ResponseType)
   async getListQuizzes(@Query() query: FilterQuizzesRequestDto): Promise<ResponseType> {
     return this.quizService.getListQuizzes(query);
+  }
+
+  @Get("getSuggestedQuizzes")
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.CANDIDATE)
+  @ApiOkResponseCustom(ResponseType)
+  async getSuggestedQuizzes(@CurrentUser("id") userId: string, @Query() query: PageOptionsDto): Promise<ResponseType> {
+    return this.quizService.getSuggestedQuizzes(userId, query);
   }
 
   @Get("getQuizDetail/:quizId")

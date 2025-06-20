@@ -7,7 +7,7 @@ import { AnyRole, ApiOkResponseCustom, CheckAbilites, CurrentUser } from '@commo
 import { AdminAbilitiesGuard } from '@modules/admin/guards';
 import { AdminActionEnum, LoginRoleEnum, SubjectEnum } from '@common/enums';
 import { CreateLeetCodeProblemDto, FilterProblemsRequestDto, UpdateLeetCodeProblemDto } from './dtos';
-import { ResponseType } from '@common/dtos';
+import { PageOptionsDto, ResponseType } from '@common/dtos';
 import { AuthGuard } from '@common/guards';
 
 @ApiTags('LeetCode')
@@ -29,6 +29,16 @@ export class LeetCodeController {
     }
 
     return this.leetCodeService.getAllProblems(page, limit, difficulty, tag, creatorUserId);
+  }
+
+  @Get('suggested-problems')
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.CANDIDATE)
+  @ApiOkResponseCustom(ResponseType)
+  async getSuggestedProblems(@CurrentUser("id") userId: string, @Query() filterDto: PageOptionsDto) {
+    const { page, limit } = filterDto;
+
+    return this.leetCodeService.getSuggestedProblems(userId, page, limit);
   }
 
   @Get('problems/:id')

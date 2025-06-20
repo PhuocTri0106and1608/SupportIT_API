@@ -29,7 +29,7 @@ export class RecombeeQueueProcessor extends WorkerHost {
     try {
       switch (job.name as RecombeeJobType) {
         case RecombeeJobType.ADD_JD:
-          return this.handleAdJd(job.data as AddJdData);
+          return this.handleAddJd(job.data as AddJdData);
         case RecombeeJobType.CREATE_JOB_IDEAL_CANDIDATE:
           return this.handleCreateJobIdealCandidate(job.data as CreateJobIdealCandidateData);
         case RecombeeJobType.ADD_CV:
@@ -50,7 +50,7 @@ export class RecombeeQueueProcessor extends WorkerHost {
     }
   }
 
-  private async handleAdJd(data: AddJdData) {
+  private async handleAddJd(data: AddJdData) {
     this.logger.log(`Executing Recombee: Add JD for JD id ${data.jd._id.toString()}`);
     return this.recombeeService.addJD(data.jd);
   }

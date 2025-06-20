@@ -1,10 +1,11 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { ResponseType } from "@common/dtos";
+import { PageOptionsDto, ResponseType } from "@common/dtos";
 import { CodeResponseEnum } from "@common/enums";
 import { QuizRepository, QuizSubmissionRepository } from "./repositories";
 import { CreateQuizDto, FilterQuizzesRequestDto, FilterSubmissionsRequestDto, SubmitQuizDto, UpdateQuizDto } from "./dtos";
 import { RedisService } from "@modules/redis";
 import { Types } from "mongoose";
+import { SuggestedResponse } from "@modules/cv/interfaces";
 
 @Injectable()
 export class QuizService {
@@ -205,6 +206,66 @@ export class QuizService {
       };
     } catch (error) {
       throw new HttpException("getListQuizzes error", HttpStatus.INTERNAL_SERVER_ERROR, {
+        cause: error,
+      });
+    }
+  }
+
+  async getSuggestedQuizzes(
+    userId: string,
+    query: PageOptionsDto
+  ): Promise<ResponseType> {
+    const { page = 1, limit = 10 } = query;
+    const skip = (page - 1) * limit;
+
+    try {
+      const redisKey = `suggest:userId:${userId}`;
+      const suggestedData: SuggestedResponse | null = await this.redisService.get(redisKey);
+
+      let suggestedQuizCategories: string[] = [];
+      if (suggestedData && suggestedData.suggested_quizzes) {
+        suggestedQuizCategories = suggestedData.suggested_quizzes;
+      }
+
+      const filter: any = { deletedAt: null };
+
+      if (suggestedQuizCategories.length > 0) {
+        filter["categories"] = { $in: suggestedQuizCategories };
+      } else {
+        console.log(`No suggested quiz categories found for userId: ${userId}`);
+        return {
+          code: CodeResponseEnum.SUCCESS,
+          data: { items: [], meta: { total: 0, page, limit, totalPages: 0 } },
+        };
+      }
+
+      const selectFields: Record<string, 0 | 1> = {
+        'questions.correctAnswer': 0,
+        'questions.explanation': 0,
+      };
+
+      const [quizzes, total] = await Promise.all([
+        this.quizRepository.findWithPagination(filter, skip, limit, true, selectFields),
+        this.quizRepository.countDocuments(filter),
+      ]);
+
+      const resultData = {
+        items: quizzes,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: resultData,
+      };
+    } catch (error) {
+      console.error(`Error getting suggested quizzes for userId ${userId}: ${error.message}`);
+      throw new HttpException(`getSuggestedQuizzes error: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR, {
         cause: error,
       });
     }

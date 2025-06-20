@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { LeetCodeProblemRepository } from './repositories';
 import { ResponseType } from '@common/dtos';
 import { CodeResponseEnum } from '@common/enums';
 import { RedisService } from '@modules/redis/redis.service';
 import { plainToClass } from 'class-transformer';
+import { SuggestedResponse } from '@modules/cv/interfaces';
 import { CreateLeetCodeProblemDto, LeetCodeProblemResponseDto, ProblemPaginationResponseDto, UpdateLeetCodeProblemDto } from './dtos';
 import { Types } from 'mongoose';
 
@@ -118,6 +119,70 @@ export class LeetCodeService {
       code: CodeResponseEnum.SUCCESS,
       data: transformedResult,
     };
+  }
+
+  async getSuggestedProblems(
+    userId: string,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<ResponseType> {
+
+    try {
+      const redisKey = `suggest:userId:${userId}`;
+      const suggestedData: SuggestedResponse | null = await this.redisService.get(redisKey);
+
+      let suggestedProblemTags: string[] = [];
+      if (suggestedData && suggestedData.suggested_problems) {
+        suggestedProblemTags = suggestedData.suggested_problems;
+      }
+
+      const filter: any = {};
+      if (suggestedProblemTags.length > 0) {
+        filter.topicTags = { $in: suggestedProblemTags };
+      } else {
+        console.log(`No suggested problem tags found for userId: ${userId}`);
+        return {
+          code: CodeResponseEnum.SUCCESS,
+          data: plainToClass(ProblemPaginationResponseDto, { problems: [], pagination: { total: 0, page, limit, totalPages: 0 } }, { excludeExtraneousValues: true }),
+        };
+      }
+
+      const skip = (page - 1) * limit;
+      const [problems, total] = await Promise.all([
+        this.leetCodeProblemRepository.findWithPagination(filter, skip, limit),
+        this.leetCodeProblemRepository.countDocuments(filter),
+      ]);
+
+      const transformedProblems = problems.map(problem =>
+        plainToClass(LeetCodeProblemResponseDto, problem as any, {
+          excludeExtraneousValues: true
+        })
+      );
+
+      const result = {
+        problems: transformedProblems,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+
+      const transformedResult = plainToClass(ProblemPaginationResponseDto, result, {
+        excludeExtraneousValues: true
+      });
+
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: transformedResult,
+      };
+    } catch (error) {
+      console.error(`Error getting suggested problems for userId ${userId}: ${error.message}`);
+      throw new HttpException(`getSuggestedProblems error: ${error.message}`, HttpStatus.INTERNAL_SERVER_ERROR, {
+        cause: error,
+      });
+    }
   }
 
   async getAllTopicTags(): Promise<ResponseType> {

@@ -22,6 +22,7 @@ export class CVController {
     private readonly mediaService: MediaService
   ) { }
   @Post('uploadJD')
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   async uploadJD(
     @CurrentUser() user: IAuthPayload,
@@ -31,6 +32,7 @@ export class CVController {
   }
 
   @Patch('updateJD/:jdId')
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.RECRUITER)
   async updateJD(
     @CurrentUser() user: IAuthPayload,
@@ -41,6 +43,7 @@ export class CVController {
   }
 
   @Post('uploadCV')
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   async uploadCV(
     @CurrentUser() user,
@@ -50,6 +53,7 @@ export class CVController {
   }
 
   @Patch('application/:id/status')
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.RECRUITER)
   async updateApplicationStatus(
     @Param('id') id: string,
@@ -60,12 +64,14 @@ export class CVController {
   }
 
   @Post("reviewCV/:cvId/:jdId")
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   async reviewCV(@CurrentUser() user, @Param("cvId") cvId: string, @Param("jdId") jdId: string): Promise<ResponseType> {
     return this.cvService.reviewCV({ userId: user.id, cvId, jdId });
   }
 
   @Post("applyCV/:cvId/:jdId")
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   async applyCV(@CurrentUser() user, @Param("cvId") cvId: string, @Param("jdId") jdId: string): Promise<ResponseType> {
     return this.cvService.applyCV({ userId: user.id, cvId, jdId });
@@ -121,6 +127,7 @@ export class CVController {
 
   // Endpoint để xóa JD theo ID
   @Delete('delete-jd/:id')
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.RECRUITER)
   async deleteJD(@Param('id') id: string): Promise<ResponseType> {
     return this.cvService.deleteJD(id);
@@ -128,6 +135,7 @@ export class CVController {
 
   // Endpoint để xóa CV theo ID
   @Delete('delete-cv/:id')
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   async deleteCV(@Param('id') id: string): Promise<ResponseType> {
     return this.cvService.deleteCV(id);
@@ -138,6 +146,7 @@ export class CVController {
     type: UploadFileDto,
   })
   @UseInterceptors(FileInterceptor('file'))
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   @Post('uploadFile')
   @ApiOkResponse({
@@ -167,6 +176,7 @@ export class CVController {
   @ApiBody({
     type: UploadFileDto,
   })
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   @UseInterceptors(FileInterceptor('file'))
   @Post('uploadImage')
@@ -194,6 +204,7 @@ export class CVController {
   }
 
   @Delete('deleteFile')
+  @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   @ApiOkResponse({ type: ResponseType })
   async deleteFile(@Body() body: DeleteFileDto): Promise<ResponseType> {

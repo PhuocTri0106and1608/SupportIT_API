@@ -166,7 +166,6 @@ export class RecombeeService {
         experience: candidate.information?.experience || [],
         isJobIdeal: false,
       };
-      console.log(userValues);
 
       await this.client.send(
         new SetUserValues(candidate.userId, userValues, { cascadeCreate: true }),
