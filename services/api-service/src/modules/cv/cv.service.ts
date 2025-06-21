@@ -226,6 +226,10 @@ export class CVService {
       const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
       const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
 
+      this.suggestQueueService.addToQueue(
+        SuggestType.SKILL_SUGGESTION,
+        { userId, requestedSkills }
+      );
       this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue });
       this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue });
       this.recombeeQueueService.addInteractionToRecombee({
@@ -233,10 +237,6 @@ export class CVService {
         itemId: jd._id.toString(),
         interactionType: 'apply'
       });
-      this.suggestQueueService.addToQueue(
-        SuggestType.SKILL_SUGGESTION,
-        { userId, requestedSkills }
-      );
 
       await this.applicationRepository.create({
         candidateId: userId,
@@ -338,12 +338,12 @@ export class CVService {
       const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
       const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
 
-      this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue });
-      this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue });
       this.suggestQueueService.addToQueue(
         SuggestType.SKILL_SUGGESTION,
         { userId, requestedSkills }
       );
+      this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue });
+      this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue });
 
       return {
         code: CodeResponseEnum.SUCCESS,
