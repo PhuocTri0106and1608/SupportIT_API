@@ -226,16 +226,20 @@ export class CVService {
       const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
       const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
 
-      this.suggestQueueService.addToQueue(
-        SuggestType.SKILL_SUGGESTION,
-        { userId, requestedSkills }
-      );
-      this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue });
-      this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue });
-      this.recombeeQueueService.addInteractionToRecombee({
-        userId,
-        itemId: jd._id.toString(),
-        interactionType: 'apply'
+      Promise.allSettled([
+        this.suggestQueueService.addToQueue(
+          SuggestType.SKILL_SUGGESTION,
+          { userId, requestedSkills }
+        ),
+        this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue }),
+        this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue }),
+        this.recombeeQueueService.addInteractionToRecombee({
+          userId,
+          itemId: jd._id.toString(),
+          interactionType: 'apply'
+        })
+      ]).catch(err => {
+        console.error("Error when adding to queues in applyCV:", err);
       });
 
       await this.applicationRepository.create({
@@ -338,12 +342,16 @@ export class CVService {
       const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
       const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
 
-      this.suggestQueueService.addToQueue(
-        SuggestType.SKILL_SUGGESTION,
-        { userId, requestedSkills }
-      );
-      this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue });
-      this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue });
+      Promise.allSettled([
+        this.suggestQueueService.addToQueue(
+          SuggestType.SKILL_SUGGESTION,
+          { userId, requestedSkills }
+        ),
+        this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue }),
+        this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue }),
+      ]).catch(err => {
+        console.error("Error when adding to queues in reviewCV:", err);
+      });
 
       return {
         code: CodeResponseEnum.SUCCESS,
