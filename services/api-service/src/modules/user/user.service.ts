@@ -174,8 +174,6 @@ export class UserService {
             const { id, loginRole } = request;
             const user = await this.userRepository.findOne({ _id: id }, true, ["-googleAccessToken", "-googleRefreshToken"]);
             const extraInfo = loginRole === LoginRoleEnum.CANDIDATE ? await this.candidateRepository.findOne({ userId: id }) : await this.recruiterRepository.findOne({ userId: id });
-            console.log("extraInfo", extraInfo);
-            console.log("user", user);
             return {
                 ...user,
                 extraInfo

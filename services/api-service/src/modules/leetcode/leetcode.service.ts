@@ -18,7 +18,7 @@ export class LeetCodeService {
     private readonly redisService: RedisService,
   ) { }
 
-  async getProblemById(id: number): Promise<ResponseType> {
+  async getProblemById(id: string): Promise<ResponseType> {
     const cacheKey = `${this.CACHE_KEY_PREFIX}problem:id:${id}`;
     const cachedProblem = await this.redisService.get(cacheKey);
 
@@ -29,7 +29,7 @@ export class LeetCodeService {
       };
     }
 
-    const problem = await this.leetCodeProblemRepository.findByProblemId(id);
+    const problem = await this.leetCodeProblemRepository.findById(id);
     if (!problem) {
       throw new NotFoundException(`Problem with ID ${id} not found`);
     }

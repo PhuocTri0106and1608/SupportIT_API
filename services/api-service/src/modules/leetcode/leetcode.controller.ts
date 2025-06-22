@@ -43,7 +43,7 @@ export class LeetCodeController {
 
   @Get('problems/:id')
   @ApiOkResponseCustom(ResponseType)
-  async getProblemById(@Param('id') id: number) {
+  async getProblemById(@Param('id') id: string) {
     return this.leetCodeService.getProblemById(id);
   }
 
