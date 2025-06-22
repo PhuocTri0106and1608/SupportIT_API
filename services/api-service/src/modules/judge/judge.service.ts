@@ -2,12 +2,12 @@ import { Injectable, Logger, BadRequestException, InternalServerErrorException }
 import axios from 'axios';
 import { ResponseType } from '@common/dtos';
 import { CodeResponseEnum } from '@common/enums';
-import { LeetCodeService } from '@modules/leetcode/leetcode.service';
 import { SubmissionResultRepository } from './repositories';
 import * as fs from 'fs';
 import * as path from 'path';
 import { env } from '@environments';
 import { RedisService } from '@modules/redis';
+import { LeetCodeProblemRepository } from '@modules/leetcode/repositories';
 
 // Đọc file JSON ngôn ngữ được hỗ trợ
 const languageCodesFilePath = path.join(__dirname, 'newdatabase.languagecodes.json');
@@ -34,7 +34,7 @@ export class JudgeService {
 
   constructor(
     private readonly redisService: RedisService,
-    private readonly leetCodeService: LeetCodeService,
+    private readonly leetCodeRepository: LeetCodeProblemRepository,
     private readonly submissionResultRepository: SubmissionResultRepository,
   ) {
     this.rapidApiKey = env.judge0Api.RAPID_API_KEY || '';
@@ -65,8 +65,7 @@ export class JudgeService {
   async testCode(userId: string, sourceCode: string, languageId: number, problemId: number): Promise<ResponseType> {
     try {
       // Get problem from database
-      const problemResponse = await this.leetCodeService.getProblemById(problemId);
-      const problem = problemResponse.data;
+      const problem = await this.leetCodeRepository.findByProblemId(problemId);
 
       if (!problem) {
         throw new BadRequestException(`Problem with ID ${problemId} not found`);
@@ -159,8 +158,7 @@ export class JudgeService {
   async submitCode(userId: string, sourceCode: string, languageId: number, problemId: number): Promise<ResponseType> {
     try {
       // Get problem from database
-      const problemResponse = await this.leetCodeService.getProblemById(problemId);
-      const problem = problemResponse.data;
+      const problem = await this.leetCodeRepository.findByProblemId(problemId);
 
       if (!problem) {
         throw new BadRequestException(`Problem with ID ${problemId} not found`);
