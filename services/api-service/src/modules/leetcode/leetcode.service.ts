@@ -95,11 +95,15 @@ export class LeetCodeService {
       this.leetCodeProblemRepository.countDocuments(filter),
     ]);
 
-    const transformedProblems = problems.map(problem =>
-      plainToClass(LeetCodeProblemResponseDto, problem as any, {
+    const transformedProblems = problems.map(problem => {
+      const plainProblem = {
+        ...problem,
+        _id: problem._id.toString()
+      };
+      return plainToClass(LeetCodeProblemResponseDto, plainProblem, {
         excludeExtraneousValues: true
-      })
-    );
+      });
+    });
 
     const result = {
       problems: transformedProblems,
@@ -153,11 +157,15 @@ export class LeetCodeService {
         this.leetCodeProblemRepository.countDocuments(filter),
       ]);
 
-      const transformedProblems = problems.map(problem =>
-        plainToClass(LeetCodeProblemResponseDto, problem as any, {
+      const transformedProblems = problems.map(problem => {
+        const plainProblem = {
+          ...problem,
+          _id: problem._id.toString()
+        };
+        return plainToClass(LeetCodeProblemResponseDto, plainProblem, {
           excludeExtraneousValues: true
-        })
-      );
+        });
+      }); 
 
       const result = {
         problems: transformedProblems,
