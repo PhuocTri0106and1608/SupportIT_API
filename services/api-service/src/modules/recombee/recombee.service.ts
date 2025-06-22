@@ -7,7 +7,6 @@ import { AddItem, SetItemValues, AddDetailView, AddPurchase, AddRating, Recommen
 import { ApiClient } from 'recombee-api-client';
 import { CandidateDocument } from '@modules/candidate/schemas';
 import { RedisService } from '@modules/redis';
-import { timeout } from 'rxjs';
 
 
 @Injectable()
@@ -22,16 +21,9 @@ export class RecombeeService {
     this.client = new ApiClient(env.recombee.DB_DEV, env.recombee.DEV_PRIVATE_TOKEN, { region: 'ap-se' });
     // this.initializeProperties();
   }
-  private async initializeProperties() {
+  async initializeProperties() {
     await this.addItemProperties();
     await this.addUserProperties();
-  }
-
-  private async sendWithTimeout<T>(request: any, ms = 5000): Promise<T> {
-    return Promise.race([
-      this.client.send(request),
-      new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Recombee request timeout')), ms))
-    ]);
   }
   // Định nghĩa thuộc tính cho item (CV, JD)
   async addItemProperties() {
@@ -127,25 +119,25 @@ export class RecombeeService {
 
     switch (interactionType) {
       case 'apply':
-        await this.sendWithTimeout(new AddPurchase(userId, itemId, { timestamp }));
+        await this.client.send(new AddPurchase(userId, itemId, { timestamp }));
         break;
       case 'shortlisted':
-        await this.sendWithTimeout(new AddBookmark(userId, itemId, { timestamp }));
+        await this.client.send(new AddBookmark(userId, itemId, { timestamp }));
         break;
       case 'accepted':
-        await this.sendWithTimeout(new AddPurchase(userId, itemId, {
+        await this.client.send(new AddPurchase(userId, itemId, {
           timestamp,
           rating: 1 // Positive interaction
         }));
         break;
       case 'rejected':
-        await this.sendWithTimeout(new AddPurchase(userId, itemId, {
+        await this.client.send(new AddPurchase(userId, itemId, {
           timestamp,
           rating: -1 // Negative interaction
         }));
         break;
       default:
-        await this.sendWithTimeout(new AddDetailView(userId, itemId, { timestamp }));
+        await this.client.send(new AddDetailView(userId, itemId, { timestamp }));
     }
   }
 
@@ -158,7 +150,7 @@ export class RecombeeService {
       rating,
       { timestamp: evaluation.createdAt.toISOString() },
     );
-    await this.sendWithTimeout(request);
+    await this.client.send(request);
   }
 
   async addCandidate(candidate: CandidateDocument) {
@@ -175,7 +167,7 @@ export class RecombeeService {
         isJobIdeal: false,
       };
 
-      await this.sendWithTimeout(
+      await this.client.send(
         new SetUserValues(candidate.userId, userValues, { cascadeCreate: true }),
       );
       console.log(`User ${candidate.userId} added/updated in Recombee`);
