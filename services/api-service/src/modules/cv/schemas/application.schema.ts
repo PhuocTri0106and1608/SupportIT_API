@@ -15,11 +15,11 @@ export class Application extends BaseSchema {
   @Prop({ required: true })
   jdId: string;
 
-  @Prop({ type: String, required: true })
-  evaluationId: string;
+  @Prop({ type: String, required: false })
+  evaluationId?: string;
 
-  @Prop({ type: Number, required: true })
-  overallScore: number;
+  @Prop({ type: Number, required: false })
+  overallScore?: number;
 
   @Prop({ required: true, enum: ["pending", "shortlisted", "rejected", "accepted"] })
   status: "pending" | "shortlisted" | "rejected" | "accepted";

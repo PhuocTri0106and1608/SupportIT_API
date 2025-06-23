@@ -3,7 +3,7 @@ import { logger } from "@modules/logger";
 import { Processor, WorkerHost } from "@nestjs/bullmq";
 import { Job } from "bullmq";
 import { SuggestQueueService } from "../services";
-import { SuggestData, SuggestType } from "@modules/cv/interfaces";
+import { SuggestData, SuggestType } from "../interfaces";
 
 @Processor("suggest-queue")
 export class SuggestQueueProcessor extends WorkerHost {
