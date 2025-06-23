@@ -88,6 +88,7 @@ export class RecombeeService {
         type: 'cv',
       }, { cascadeCreate: true }),
     );
+    console.log(`CV ${cv._id.toString()} added/updated in Recombee`);
   }
 
   // Thêm JD vào Recombee
@@ -111,6 +112,7 @@ export class RecombeeService {
         verified: jd.verified
       }, { cascadeCreate: true }),
     );
+    console.log(`JD ${jd._id.toString()} added/updated in Recombee`);
   }
 
   // Thêm tương tác (interaction)
@@ -139,6 +141,7 @@ export class RecombeeService {
       default:
         await this.client.send(new AddDetailView(userId, itemId, { timestamp }));
     }
+    console.log(`Interaction for User ${userId} on JD ${itemId} added/updated in Recombee`);
   }
 
   // Thêm đánh giá từ Evaluation
@@ -151,6 +154,7 @@ export class RecombeeService {
       { timestamp: evaluation.createdAt.toISOString() },
     );
     await this.client.send(request);
+    console.log(`Evaluation for CV ${evaluation.cvId} by JD ${evaluation.jdId} added/updated in Recombee`);
   }
 
   async addCandidate(candidate: CandidateDocument) {
@@ -193,6 +197,7 @@ export class RecombeeService {
         isJobIdeal: true,
       };
       await this.client.send(new SetUserValues(jdId, userValues, { cascadeCreate: true }));
+      console.log(`Create Job Ideal Candidate for JD ${jdId} in Recombee`);
     } catch (error) {
       console.error('Error creating ideal candidate for JD:', error);
       throw error;

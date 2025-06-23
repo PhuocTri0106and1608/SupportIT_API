@@ -116,23 +116,27 @@ export class CVService {
         information: extractCVResponse,
       });
 
+      
+      await this.candidateRepository.findOneAndUpdate(
+        { userId: candidate.userId },
+        {
+          $set: {
+            position: cv.position,
+            infomation: extractCVResponse
+          }
+        }
+      );
+      
       const cvDataForQueue = JSON.parse(JSON.stringify(createdCV));
       const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
-
-      await Promise.all([
-        this.candidateRepository.findOneAndUpdate(
-          { userId: candidate.userId },
-          {
-            $set: {
-              position: cv.position,
-              infomation: extractCVResponse
-            }
-          }),
-      ]);
       
-      this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 }),
-      this.recombeeQueueService.addCvToRecombee({ cv: cvDataForQueue });
-      this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue });
+      Promise.allSettled([
+        this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 }),
+        this.recombeeQueueService.addCvToRecombee({ cv: cvDataForQueue }),
+        this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue }),
+      ]).catch(err => {
+        console.error("Error when adding to queues in uploadCV:", err);
+      });
 
       return {
         code: CodeResponseEnum.SUCCESS,
@@ -224,20 +228,13 @@ export class CVService {
         missing_skills: reviewCVResponse.skills_analysis.missing_skills
       };
       const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
-      const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
 
       Promise.allSettled([
         this.suggestQueueService.addToQueue(
           SuggestType.SKILL_SUGGESTION,
           { userId, requestedSkills }
         ),
-        this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue }),
-        this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue }),
-        this.recombeeQueueService.addInteractionToRecombee({
-          userId,
-          itemId: jd._id.toString(),
-          interactionType: 'apply'
-        })
+        this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue, type: 'apply' })
       ]).catch(err => {
         console.error("Error when adding to queues in applyCV:", err);
       });
@@ -340,15 +337,13 @@ export class CVService {
         missing_skills: reviewCVResponse.skills_analysis.missing_skills
       };
       const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
-      const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
 
       Promise.allSettled([
         this.suggestQueueService.addToQueue(
           SuggestType.SKILL_SUGGESTION,
           { userId, requestedSkills }
         ),
-        this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue }),
-        this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue }),
+        this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue, type: 'review' }),
       ]).catch(err => {
         console.error("Error when adding to queues in reviewCV:", err);
       });

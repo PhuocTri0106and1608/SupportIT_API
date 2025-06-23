@@ -27,7 +27,8 @@ export interface AddCandidateData {
 }
 
 export interface AddEvaluationData {
-  evaluation: EvaluationDocument
+  evaluation: EvaluationDocument,
+  type: "review" | "apply";
 }
 
 export interface AddInteractionData {
