@@ -54,6 +54,12 @@ export class SuggestQueueService {
         const { userId, requestedSkills } = data;
         logger.info(`Fetching suggestions from Flask for userId: ${userId}`);
         try {
+            const cachedSuggestions = await this.redisService.get(`suggest:userId:${userId}`);
+            if (cachedSuggestions) {
+                logger.info(`Returning cached suggestions for userId: ${userId}`);
+                return { result: true, data: cachedSuggestions as SuggestedResponse };
+            }
+
             const suggestResponse = await axios.post(`${env.flask.SUGGEST_URL}`, requestedSkills);
 
             if (!suggestResponse?.data || !suggestResponse.data?.suggested_problems || !suggestResponse.data?.suggested_quizzes || suggestResponse.data?.suggested_problems.length === 0 || suggestResponse.data?.suggested_quizzes.length === 0) {
@@ -63,7 +69,7 @@ export class SuggestQueueService {
                 const suggestedProblems = suggestResponse.data.suggested_problems;
                 const suggestedQuizzes = suggestResponse.data.suggested_quizzes;
 
-                await this.redisService.set(`suggest:userId:${userId}`, { suggested_problems: suggestedProblems, suggested_quizzes: suggestedQuizzes } as SuggestedResponse);
+                await this.redisService.set(`suggest:userId:${userId}`, { suggested_problems: suggestedProblems, suggested_quizzes: suggestedQuizzes } as SuggestedResponse, { ttl: 60 * 60 * 24 * 7 }); // Cache for 7 days
                 logger.info(`Successfully stored suggestions for userId: ${userId}`);
                 return { result: true };
             }
