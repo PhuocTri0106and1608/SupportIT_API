@@ -72,12 +72,14 @@ export class RecombeeQueueProcessor extends WorkerHost {
 
   private async handleAddEvaluation(data: AddEvaluationData) {
     this.logger.log(`Executing Recombee: Add Evaluation for Evaluation id ${data.evaluation._id.toString()}`);
-    if (data.type === "apply") await this.handleAddInteraction({
-      userId: data.evaluation.candidateId,
-      itemId: data.evaluation.jdId,
-      interactionType: "apply"
-    });
-    return this.recombeeService.addEvaluation(data.evaluation);
+    if (data.type === "apply") {
+      return Promise.allSettled([
+        this.recombeeService.addEvaluation(data.evaluation),
+        this.recombeeService.addInteraction(data.evaluation.candidateId, data.evaluation.jdId, "apply")
+      ]);
+    } else if (data.type === "review") {
+      return this.recombeeService.addEvaluation(data.evaluation);
+    }
   }
 
   private async handleAddInteraction(data: AddInteractionData) {
