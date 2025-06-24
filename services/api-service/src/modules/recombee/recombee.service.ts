@@ -350,21 +350,25 @@ export class RecombeeService {
 
             let boosterString: string | undefined;
             if (candidateSkills.length > 0 || candidatePosition) {
-                let skillBooster = "";
+                let skillBoosterExpression = "";
                 if (candidateSkills.length > 0) {
-                    skillBooster = `sum(map(item['skills'], jd_skill -> if (${JSON.stringify(candidateSkills)}.indexOf(jd_skill) > -1) then 1.0 else 0.0))`;
+                    skillBoosterExpression = `sum(map(item['skills'], jd_skill -> if (${JSON.stringify(candidateSkills)}.indexOf(jd_skill) > -1) then 1.0 else 0.0))`;
                 }
 
-                let positionBooster = "";
+                let positionBoosterExpression = "";
                 if (candidatePosition) {
-                    positionBooster = `if (item['position'] == "${candidatePosition}") then 1.5 else 0.0`;
+                    positionBoosterExpression = `if (item['position'] == "${candidatePosition}") then 1.5 else 0.0`;
                 }
-                if (skillBooster && positionBooster) {
-                    boosterString = `(${skillBooster} * 0.4) + (${positionBooster} * 0.6)`;
-                } else if (skillBooster) {
-                    boosterString = `${skillBooster} * 0.4`;
-                } else if (positionBooster) {
-                    boosterString = `${positionBooster} * 0.6`;
+
+                const skillWeight = 0.4;
+                const positionWeight = 0.6;
+
+                if (skillBoosterExpression && positionBoosterExpression) {
+                    boosterString = `(${skillBoosterExpression} * ${skillWeight}) + (${positionBoosterExpression} * ${positionWeight})`;
+                } else if (skillBoosterExpression) {
+                    boosterString = `(${skillBoosterExpression} * ${skillWeight})`;
+                } else if (positionBoosterExpression) {
+                    boosterString = `(${positionBoosterExpression} * ${positionWeight})`;
                 }
             }
 
