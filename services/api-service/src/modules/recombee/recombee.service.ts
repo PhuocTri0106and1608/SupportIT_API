@@ -338,14 +338,18 @@ export class RecombeeService {
 
             const boosters = [];
             if (candidateSkills.length > 0) boosters.push(`(if ('skills' in ${JSON.stringify(candidateSkills)}) then 1.5 else 1)`);
-            if (candidatePosition) boosters.push(`(if ('position' == "${candidatePosition}") then 1.2 else 1.0)`);
+            if (candidatePosition) boosters.push(`(if ('position' == "${candidatePosition}") then 2 else 1)`);
             const booster = boosters.length > 0 ? boosters.join(' * ') : undefined;
 
             const recommendAndCache = async () => {
                 const request = new RecommendItemsToUser(candidateId, limit, {
                     scenario: "candidate-to-jd",
                     filter: "'type' == \"jd\" and 'visibility' == \"public\" and 'verified' == true",
+                    cascadeCreate: true,
                     returnProperties: true,
+                    diversity: 0.0,
+                    rotationTime: 0.0,
+                    rotationRate: 0.2,
                     offset: (page - 1) * limit,
                     ...(booster && {
                         booster,
