@@ -378,7 +378,7 @@ export class RecombeeService {
             try {
                 return await recommendAndCache();
             } catch (error: any) {
-                if (error.message && error.message.includes(`User "${candidateId}" does not exist!`)) {
+                if (error.message && error.message.includes(`{\"User \\\"${candidateId}\\\" does not exist!\"`)) {
                     console.warn(`User ${candidateId} does not exist in Recombee. Attempting to add user...`);
                     const candidateInDB = await this.candidateRepository.findById(candidateId);
                     if (candidateInDB) {
