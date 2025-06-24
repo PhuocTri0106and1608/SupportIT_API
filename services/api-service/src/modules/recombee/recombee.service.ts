@@ -327,6 +327,12 @@ export class RecombeeService {
                 return JSON.parse(cachedJDs);
             }
 
+            const candidate: CandidateDocument = await this.candidateRepository.findOne({ userId: candidateId });
+            if (!candidate) {
+                console.warn(`Candidate with ID ${candidateId} not found in DB.`);
+                return [];
+            }
+
             let candidateSkills: string[] = [];
             let candidatePosition: string | undefined;
             const cachedCandidateSkills = await this.redisService.get(candidateSkillsCacheKey);
@@ -337,11 +343,6 @@ export class RecombeeService {
                 candidatePosition = cachedData.position;
                 console.log("Serving candidate skills from Redis cache");
             } else {
-                const candidate: CandidateDocument = await this.candidateRepository.findById(candidateId);
-                if (!candidate) {
-                    console.warn(`Candidate with ID ${candidateId} not found in DB.`);
-                    return [];
-                }
                 candidateSkills = (candidate?.information?.skills || []).map((skill) => skill.toLowerCase());
                 candidatePosition = candidate.position?.toLowerCase();
 
@@ -403,15 +404,9 @@ export class RecombeeService {
             } catch (error: any) {
                 if (error.message && error.message.includes(`User`) && error.message.includes(`does not exist!`)) {
                     console.warn(`User ${candidateId} does not exist in Recombee. Attempting to add user...`);
-                    const candidateInDB = await this.candidateRepository.findOne({ userId: candidateId });
-                    if (candidateInDB) {
-                        await this.addCandidate(candidateInDB);
-                        console.log(`User ${candidateId} added to Recombee. Retrying JD recommendation...`);
-                        return await recommendAndCache();
-                    } else {
-                        console.error(`Candidate with ID ${candidateId} not found in DB, cannot add to Recombee.`);
-                        throw new Error(`Candidate with ID ${candidateId} not found to add to Recombee.`);
-                    }
+                    await this.addCandidate(candidate);
+                    console.log(`User ${candidateId} added to Recombee. Retrying JD recommendation...`);
+                    return await recommendAndCache();
                 } else {
                     throw error;
                 }
