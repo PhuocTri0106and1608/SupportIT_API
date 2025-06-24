@@ -317,7 +317,6 @@ export class RecombeeService {
     // Gợi ý JD cho ứng viên
     async recommendJDsForCandidate(candidateId: string, limit: number = 5, page: number = 1) {
         const cacheKey = `recommendations:candidate:${candidateId}:limit:${limit}:page:${page}`;
-        const candidateSkillsCacheKey = `candidate_skills:${candidateId}`;
         const CACHE_EXPIRATION_SECONDS = 3600;
 
         try {
@@ -333,20 +332,9 @@ export class RecombeeService {
 
             let candidateSkills: string[] = [];
             let candidatePosition: string | undefined;
-            const cachedCandidateSkills = await this.redisService.get(candidateSkillsCacheKey);
 
-            if (cachedCandidateSkills) {
-                const cachedData = JSON.parse(cachedCandidateSkills);
-                candidateSkills = cachedData.skills;
-                candidatePosition = cachedData.position;
-                console.log("Serving candidate skills from Redis cache");
-            } else {
-                candidateSkills = (candidate?.information?.skills || []).map((skill) => skill.toLowerCase());
-                candidatePosition = candidate.position?.toLowerCase();
-
-                await this.redisService.set(candidateSkillsCacheKey, JSON.stringify({ skills: candidateSkills, position: candidatePosition }), { ttl: CACHE_EXPIRATION_SECONDS });
-                console.log("Candidate skills fetched from DB and cached");
-            }
+            candidateSkills = (candidate?.information?.skills || []).map((skill) => skill.toLowerCase());
+            candidatePosition = candidate.position?.toLowerCase();
 
             let boosterString: string | undefined;
             if (candidateSkills.length > 0 || candidatePosition) {
