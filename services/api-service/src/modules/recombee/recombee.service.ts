@@ -315,7 +315,7 @@ export class RecombeeService {
     }
 
     // Gợi ý JD cho ứng viên
-    async recommendJDsForCandidate(candidateId: string, limit: number = 10, page: number = 1) {
+    async recommendJDsForCandidate(candidateId: string, limit: number = 5, page: number = 1) {
         const cacheKey = `recommendations:candidate:${candidateId}:limit:${limit}:page:${page}`;
         const candidateSkillsCacheKey = `candidate_skills:${candidateId}`;
         const CACHE_EXPIRATION_SECONDS = 3600;
@@ -328,26 +328,49 @@ export class RecombeeService {
             }
 
             let candidateSkills: string[] = [];
+            let candidatePosition: string | undefined;
             const cachedCandidateSkills = await this.redisService.get(candidateSkillsCacheKey);
 
             if (cachedCandidateSkills) {
-                candidateSkills = JSON.parse(cachedCandidateSkills);
+                const cachedData = JSON.parse(cachedCandidateSkills);
+                candidateSkills = cachedData.skills;
+                candidatePosition = cachedData.position;
                 console.log("Serving candidate skills from Redis cache");
             } else {
-                const candidate = await this.candidateRepository.findById(candidateId);
+                const candidate: CandidateDocument = await this.candidateRepository.findById(candidateId);
                 if (!candidate) {
                     console.warn(`Candidate with ID ${candidateId} not found in DB.`);
                     return [];
                 }
                 candidateSkills = (candidate?.information?.skills || []).map((skill) => skill.toLowerCase());
+                candidatePosition = candidate.position?.toLowerCase();
 
-                await this.redisService.set(candidateSkillsCacheKey, JSON.stringify(candidateSkills), { ttl: CACHE_EXPIRATION_SECONDS });
+                await this.redisService.set(
+                    candidateSkillsCacheKey,
+                    JSON.stringify({ skills: candidateSkills, position: candidatePosition }),
+                    { ttl: CACHE_EXPIRATION_SECONDS }
+                );
                 console.log("Candidate skills fetched from DB and cached");
             }
 
             let boosterString: string | undefined;
-            if (candidateSkills.length > 0) {
-                boosterString = `sum(map(item['skills'], jd_skill -> if (${JSON.stringify(candidateSkills)}.indexOf(jd_skill) > -1) then 1.0 else 0.0)) * 0.6`;
+            if (candidateSkills.length > 0 || candidatePosition) {
+                let skillBooster = "";
+                if (candidateSkills.length > 0) {
+                    skillBooster = `sum(map(item['skills'], jd_skill -> if (${JSON.stringify(candidateSkills)}.indexOf(jd_skill) > -1) then 1.0 else 0.0))`;
+                }
+
+                let positionBooster = "";
+                if (candidatePosition) {
+                    positionBooster = `if (item['position'] == "${candidatePosition}") then 1.5 else 0.0`;
+                }
+                if (skillBooster && positionBooster) {
+                    boosterString = `(${skillBooster} * 0.4) + (${positionBooster} * 0.6)`;
+                } else if (skillBooster) {
+                    boosterString = `${skillBooster} * 0.4`;
+                } else if (positionBooster) {
+                    boosterString = `${positionBooster} * 0.6`;
+                }
             }
 
             const recommendAndCache = async () => {
