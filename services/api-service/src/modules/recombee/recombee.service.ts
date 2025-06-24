@@ -357,18 +357,23 @@ export class RecombeeService {
 
                 let positionBoosterExpression = "";
                 if (candidatePosition) {
-                    positionBoosterExpression = `if (item['position'] == "${candidatePosition}") then 1.5 else 0.0`;
+                    positionBoosterExpression = `(if (item['position'] == "${candidatePosition}") then 1.5 else 0.0)`;
                 }
 
                 const skillWeight = 0.4;
                 const positionWeight = 0.6;
 
-                if (skillBoosterExpression && positionBoosterExpression) {
-                    boosterString = `(${skillBoosterExpression} * ${skillWeight}) + (${positionBoosterExpression} * ${positionWeight})`;
-                } else if (skillBoosterExpression) {
-                    boosterString = `(${skillBoosterExpression} * ${skillWeight})`;
-                } else if (positionBoosterExpression) {
-                    boosterString = `(${positionBoosterExpression} * ${positionWeight})`;
+                const boosterParts: string[] = [];
+
+                if (skillBoosterExpression) {
+                    boosterParts.push(`(${skillBoosterExpression} * ${skillWeight})`);
+                }
+                if (positionBoosterExpression) {
+                    boosterParts.push(`(${positionBoosterExpression} * ${positionWeight})`);
+                }
+
+                if (boosterParts.length > 0) {
+                    boosterString = boosterParts.join(" + ");
                 }
             }
 
