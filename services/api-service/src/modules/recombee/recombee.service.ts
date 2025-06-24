@@ -334,7 +334,7 @@ export class RecombeeService {
             let candidatePosition: string | undefined;
 
             candidateSkills = (candidate?.information?.skills || []).map((skill) => skill.toLowerCase());
-            candidatePosition = candidate.position?.toLowerCase();
+            candidatePosition = candidate.position;
 
             let boosterString: string | undefined;
             if (candidateSkills.length > 0 || candidatePosition) {
