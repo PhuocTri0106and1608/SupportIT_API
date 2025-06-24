@@ -88,12 +88,16 @@ export class CvProcessingProcessor extends WorkerHost {
 
       const reviewCVResponse = response.data;
 
-      const evaluation = await this.evaluationRepository.create({
+      const evaluation = await this.evaluationRepository.findOneAndUpdate({
+        candidateId: userId,
+        cvId: cvData._id.toString(),
+        jdId: jdData._id.toString(),
+      }, {
         candidateId: userId,
         cvId: cvData._id.toString(),
         jdId: jdData._id.toString(),
         reviewCVResponse
-      });
+      }, { new: true, upsert: true });
 
       const requestedSkills = {
         matched_skills: reviewCVResponse.skills_analysis.matched_skills,
