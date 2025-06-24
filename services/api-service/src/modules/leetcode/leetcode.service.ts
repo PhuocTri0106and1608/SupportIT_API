@@ -4,7 +4,7 @@ import { ResponseType } from '@common/dtos';
 import { CodeResponseEnum } from '@common/enums';
 import { RedisService } from '@modules/redis/redis.service';
 import { plainToClass } from 'class-transformer';
-import { SuggestedResponse } from '@modules/cv/interfaces';
+import { SuggestedResponse } from '@modules/bull-queue/interfaces';
 import { CreateLeetCodeProblemDto, LeetCodeProblemResponseDto, ProblemPaginationResponseDto, UpdateLeetCodeProblemDto } from './dtos';
 import { Types } from 'mongoose';
 

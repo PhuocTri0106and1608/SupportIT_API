@@ -9,9 +9,10 @@ import { CandidateRepository } from "@modules/candidate/repositories";
 import { Types } from "mongoose";
 import { env } from "@environments";
 import { RedisService } from "@modules/redis";
-import { EmailType, MailQueueService, RecombeeQueueService, SuggestQueueService } from "@modules/bull-queue";
+import { CvProcessingQueueService, EmailType, MailQueueService, RecombeeQueueService, SuggestQueueService } from "@modules/bull-queue";
 import { UserRepository } from "@modules/user";
-import { SuggestType } from "./interfaces";
+import { CvProcessingJobType, SuggestType } from "@modules/bull-queue/interfaces";
+
 @Injectable()
 export class CVService {
 
@@ -29,6 +30,8 @@ export class CVService {
     private readonly mailQueueService: MailQueueService,
     @Inject(forwardRef(() => SuggestQueueService))
     private readonly suggestQueueService: SuggestQueueService,
+    @Inject(forwardRef(() => CvProcessingQueueService))
+    private readonly cvProcessingQueueService: CvProcessingQueueService,
     private readonly redisService: RedisService,
   ) { }
 
@@ -179,81 +182,31 @@ export class CVService {
         throw new HttpException("CV or JD not found", HttpStatus.NOT_FOUND);
       }
 
-      // Call Flask API to evaluate CV against JD
-      const response = await axios.post(`${env.flask.REVIEW_CV_URL}`, {
-        cv: {
-          position: cv.position,
-          experience: cv.information.experience || [],
-          skills: cv.information.skills || [],
-          education: cv.information.education || [],
-          projects: cv.information.projects || [],
-          certifications: cv.information.certifications || [],
-          languages: cv.information.languages || [],
-        },
-        jd: {
-          title: jd.title,
-          description: jd.description,
-          position: jd.position,
-          requirements: {
-            experience: jd.requirements.experience || [],
-            skills: jd.requirements.skills || [],
-            education: jd.requirements.education || [],
-            projects: jd.requirements.projects || [],
-            summary: jd.requirements.summary || '',
-            certifications: jd.requirements.certifications || [],
-            languages: jd.requirements.languages || [],
-          },
-          benefits: jd.benefits || [],
-          companyName: jd.companyName || '',
-          location: jd.location || '',
-        },
-      });
-
-      if (!response?.data) {
-        throw new HttpException("Error in reviewing CV", HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-
-      const reviewCVResponse = response.data;
-
-      // Create Evaluation
-      const evaluation = await this.evaluationRepository.create({
+      const application = await this.applicationRepository.create({
         candidateId: userId,
         cvId,
         jdId,
-        reviewCVResponse,
-      });
-
-      const requestedSkills = {
-        matched_skills: reviewCVResponse.skills_analysis.matched_skills,
-        missing_skills: reviewCVResponse.skills_analysis.missing_skills
-      };
-      const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
-
-      Promise.allSettled([
-        this.suggestQueueService.addToQueue(
-          SuggestType.SKILL_SUGGESTION,
-          { userId, requestedSkills }
-        ),
-        this.recombeeQueueService.addEvaluationToRecombee({ evaluation: evaluationDataForQueue, type: 'apply' })
-      ]).catch(err => {
-        console.error("Error when adding to queues in applyCV:", err);
-      });
-
-      await this.applicationRepository.create({
-        candidateId: userId,
-        cvId,
-        jdId,
-        overallScore: reviewCVResponse.summary.overall_score,
-        evaluationId: evaluation._id.toString(),
         status: "pending",
       });
 
+      this.cvProcessingQueueService.addToQueue(
+        CvProcessingJobType.APPLY_CV,
+        {
+          userId,
+          cvData: cv,
+          jdData: jd,
+          applicationId: application._id.toString(),
+        }
+      ).catch(error => {
+        console.error("Error adding CV processing job to queue:", error?.message || error);
+      });;
+
       return {
         code: CodeResponseEnum.SUCCESS,
-        data: evaluation,
+        message: "CV applied successfully",
       };
     } catch (error) {
-      throw new HttpException("reviewCV error", HttpStatus.INTERNAL_SERVER_ERROR, {
+      throw new HttpException("applyCV error", HttpStatus.INTERNAL_SERVER_ERROR, {
         cause: error,
       });
     }

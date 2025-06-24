@@ -70,8 +70,8 @@ export class Evaluation extends BaseSchema {
   @Prop({ type: String, required: true })
   jdId: string;
 
-  @Prop({ type: ReviewCVResponse, required: true })
-  reviewCVResponse: ReviewCVResponse;
+  @Prop({ type: ReviewCVResponse, required: false })
+  reviewCVResponse?: ReviewCVResponse;
 }
 
 export const EvaluationSchema = SchemaFactory.createForClass(Evaluation);

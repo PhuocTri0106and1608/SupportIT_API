@@ -6,7 +6,7 @@ import { Queue } from "bullmq";
 import axios from "axios";
 import { RedisService } from "@modules/redis";
 import { env } from "@environments";
-import { SuggestData, SuggestedResponse, SuggestType } from "@modules/cv/interfaces";
+import { SuggestData, SuggestedResponse, SuggestType } from "../interfaces";
 
 @Injectable()
 export class SuggestQueueService {

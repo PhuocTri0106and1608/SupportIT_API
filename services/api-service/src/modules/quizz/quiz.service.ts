@@ -5,7 +5,7 @@ import { QuizRepository, QuizSubmissionRepository } from "./repositories";
 import { CreateQuizDto, FilterQuizzesRequestDto, FilterSubmissionsRequestDto, SubmitQuizDto, UpdateQuizDto } from "./dtos";
 import { RedisService } from "@modules/redis";
 import { Types } from "mongoose";
-import { SuggestedResponse } from "@modules/cv/interfaces";
+import { SuggestedResponse } from "@modules/bull-queue/interfaces";
 
 @Injectable()
 export class QuizService {
