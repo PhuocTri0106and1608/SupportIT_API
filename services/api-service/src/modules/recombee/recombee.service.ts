@@ -336,42 +336,20 @@ export class RecombeeService {
             candidateSkills = (candidate?.information?.skills || []).map((skill) => skill.toLowerCase());
             candidatePosition = candidate.position;
 
-            let boosterString: string | undefined;
-            if (candidateSkills.length > 0 || candidatePosition) {
-                let skillBoosterExpression = "";
-                if (candidateSkills.length > 0) {
-                    skillBoosterExpression = `sum(map(item['skills'], jd_skill -> if (${JSON.stringify(candidateSkills)}.indexOf(jd_skill) > -1) then 1.0 else 0.0))`;
-                }
-
-                let positionBoosterExpression = "";
-                if (candidatePosition) {
-                    positionBoosterExpression = `(if (item['position'] == "${candidatePosition}") then 1.5 else 0.0)`;
-                }
-
-                const skillWeight = 0.4;
-                const positionWeight = 0.6;
-
-                const boosterParts: string[] = [];
-
-                if (skillBoosterExpression) {
-                    boosterParts.push(`(${skillBoosterExpression} * ${skillWeight})`);
-                }
-                if (positionBoosterExpression) {
-                    boosterParts.push(`(${positionBoosterExpression} * ${positionWeight})`);
-                }
-
-                if (boosterParts.length > 0) {
-                    boosterString = boosterParts.join(" + ");
-                }
-            }
+            const boosters = [];
+            if (candidateSkills.length > 0) boosters.push(`(if ('skills' in ${JSON.stringify(candidateSkills)}) then 1.5 else 1)`);
+            if (candidatePosition) boosters.push(`(if ('position' == "${candidatePosition}") then 1.2 else 1.0)`);
+            const booster = boosters.length > 0 ? boosters.join(' * ') : undefined;
 
             const recommendAndCache = async () => {
                 const request = new RecommendItemsToUser(candidateId, limit, {
                     scenario: "candidate-to-jd",
-                    booster: boosterString,
                     filter: "'type' == \"jd\" and 'visibility' == \"public\" and 'verified' == true",
                     returnProperties: true,
-                    offset: (page - 1) * limit
+                    offset: (page - 1) * limit,
+                    ...(booster && {
+                        booster,
+                    })
                 });
 
                 let jds = (await this.client.send(request)).recomms;
