@@ -166,7 +166,7 @@ export class CVController {
     )
     file: Express.Multer.File,
   ): Promise<ResponseType<{ imageUrl: string; publicId: string }>> {
-    return this.mediaService.uploadFileToPublicBucket('files', {
+    return this.mediaService.uploadFileToPublicBucket('images', {
       file: file,
       fileName: file.originalname,
     });
