@@ -321,16 +321,14 @@ export class RecombeeService {
         const CACHE_EXPIRATION_SECONDS = 3600;
 
         try {
+            const candidate: CandidateDocument = await this.candidateRepository.findOne({ userId: candidateId });
+            if (!candidate) {
+                throw new Error(`Candidate with ID ${candidateId} not found in DB.`);
+            }
             const cachedJDs = await this.redisService.get(cacheKey);
             if (cachedJDs) {
                 console.log("Serving JDs from Redis cache");
                 return JSON.parse(cachedJDs);
-            }
-
-            const candidate: CandidateDocument = await this.candidateRepository.findOne({ userId: candidateId });
-            if (!candidate) {
-                console.warn(`Candidate with ID ${candidateId} not found in DB.`);
-                return [];
             }
 
             let candidateSkills: string[] = [];
@@ -346,11 +344,7 @@ export class RecombeeService {
                 candidateSkills = (candidate?.information?.skills || []).map((skill) => skill.toLowerCase());
                 candidatePosition = candidate.position?.toLowerCase();
 
-                await this.redisService.set(
-                    candidateSkillsCacheKey,
-                    JSON.stringify({ skills: candidateSkills, position: candidatePosition }),
-                    { ttl: CACHE_EXPIRATION_SECONDS }
-                );
+                await this.redisService.set(candidateSkillsCacheKey, JSON.stringify({ skills: candidateSkills, position: candidatePosition }), { ttl: CACHE_EXPIRATION_SECONDS });
                 console.log("Candidate skills fetched from DB and cached");
             }
 
