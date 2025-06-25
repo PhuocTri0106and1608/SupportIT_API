@@ -83,6 +83,13 @@ export class CVController {
     return this.cvService.getListApplications(query);
   }
 
+  @Get('list-applications-for-recruiter')
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.RECRUITER)
+  async getListApplicationsForRecruiter(@CurrentUser() user, @Query() query: FilterApplicationsRequestDto): Promise<ResponseType> {
+    return this.cvService.getListApplicationsForRecruiter(user.id, query);
+  }
+
   // Endpoint để lấy danh sách CVs
   @Get('list-cvs')
   async getListCVs(@Query() query: FilterCVsRequestDto): Promise<ResponseType> {

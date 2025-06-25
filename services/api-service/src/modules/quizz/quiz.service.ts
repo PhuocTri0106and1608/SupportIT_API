@@ -324,9 +324,9 @@ export class QuizService {
 
   async updateQuiz(creatorUserId: string, id: string, quizData: UpdateQuizDto): Promise<ResponseType> {
     try {
-      const updatedQuiz = await this.quizRepository.findOneAndUpdate({ _id: new Types.ObjectId(id) }, quizData);
+      const updatedQuiz = await this.quizRepository.findOneAndUpdate({ _id: new Types.ObjectId(id), creatorUserId: creatorUserId }, quizData);
       if (!updatedQuiz) {
-        throw new HttpException("Quiz not found or update failed", HttpStatus.NOT_FOUND);
+        throw new HttpException("Quiz not found or you do not have permission to update it", HttpStatus.NOT_FOUND);
       }
       await this.redisService.del(`quizzes:${id}`);
       return {

@@ -350,6 +350,70 @@ export class CVService {
     }
   }
 
+  async getListApplicationsForRecruiter(recruiterId: string, query: FilterApplicationsRequestDto): Promise<ResponseType> {
+    const { page = 1, limit = 10, candidateId, cvId, jdId, evaluationId, status } = query;
+    const skip = (page - 1) * limit;
+
+    try {
+      const filter: any = { deletedAt: null };
+      if (candidateId) filter.candidateId = candidateId;
+      if (cvId) filter.cvId = cvId;
+      if (evaluationId) filter.evaluationId = evaluationId;
+      if (status) filter.status = status;
+
+      const listJds = await this.jdRepository.find({ creatorUserId: recruiterId, deletedAt: null });
+
+      if (listJds.length === 0) {
+        return {
+          code: CodeResponseEnum.SUCCESS,
+          data: {
+            items: [],
+            meta: { total: 0, page, limit, totalPages: 0 },
+          },
+        };
+      }
+
+      const recruiterJdIds = listJds.map(jd => jd._id.toString());
+
+      if (jdId) {
+        const isOwner = recruiterJdIds.some(id => id === jdId.toString());
+        if (isOwner) {
+          filter.jdId = jdId;
+        } else {
+          return {
+            code: CodeResponseEnum.SUCCESS,
+            data: { items: [], meta: { total: 0, page, limit, totalPages: 0 } },
+          };
+        }
+      } else {
+        filter.jdId = { $in: recruiterJdIds };
+      }
+
+      const cacheKey = `applications:recruiter:${recruiterId}:list:page=${page}:limit=${limit}:${JSON.stringify(filter)}`;
+
+      const cached = await this.redisService.get<any>(cacheKey);
+      if (cached) {
+        return { code: CodeResponseEnum.SUCCESS, data: cached };
+      }
+
+      const [applications, total] = await Promise.all([
+        this.applicationRepository.findWithDetailsAndPagination(filter, skip, limit),
+        this.applicationRepository.countDocuments(filter),
+      ]);
+
+      const resultData = {
+        items: applications,
+        meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      };
+
+      await this.redisService.set(cacheKey, resultData, { ttl: 60 });
+
+      return { code: CodeResponseEnum.SUCCESS, data: resultData };
+    } catch (error) {
+      throw new HttpException("getListApplicationsForRecruiter error", HttpStatus.INTERNAL_SERVER_ERROR, { cause: error });
+    }
+  }
+
   async getListCVs(query: FilterCVsRequestDto): Promise<ResponseType> {
     const { page = 1, limit = 10, candidateId } = query;
     const skip = (page - 1) * limit;

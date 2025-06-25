@@ -6,7 +6,7 @@ import { AnyRoleGuard, JwtAccessTokenAuthGuard } from '@modules/auth/guards';
 import { AdminActionEnum, LoginRoleEnum, SubjectEnum } from '@common/enums';
 import { PageOptionsDto, ResponseType } from '@common/dtos';
 import { AnyRole, ApiOkResponseCustom, CheckAbilites, CurrentUser } from '@common/decorators';
-import { CreateQuizDto, FilterQuizzesRequestDto, FilterSubmissionsRequestDto, SubmitQuizDto } from './dtos';
+import { CreateQuizDto, FilterQuizzesRequestDto, FilterSubmissionsRequestDto, SubmitQuizDto, UpdateQuizDto } from './dtos';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AdminAbilitiesGuard } from '@modules/admin/guards';
 
@@ -47,7 +47,7 @@ export class QuizController {
   @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.RECRUITER)
   @ApiOkResponseCustom(ResponseType)
-  async updateQuiz(@CurrentUser("id") userId: string, @Param("quizId") quizId: string, @Body() body: CreateQuizDto): Promise<ResponseType> {
+  async updateQuiz(@CurrentUser("id") userId: string, @Param("quizId") quizId: string, @Body() body: UpdateQuizDto): Promise<ResponseType> {
     return this.quizService.updateQuiz(userId, quizId, body);
   }
 
