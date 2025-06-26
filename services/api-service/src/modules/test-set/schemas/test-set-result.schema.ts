@@ -43,4 +43,5 @@ export class TestSetResult extends BaseSchema {
 }
 
 export const TestSetResultSchema = SchemaFactory.createForClass(TestSetResult);
-TestSetResultSchema.index({ testSetId: 1, candidateId: 1, finalScore: -1 }, { unique: true });
+TestSetResultSchema.index({ testSetId: 1, candidateId: 1 }, { unique: true });
+TestSetResultSchema.index({ testSetId: 1, submitted: 1, finalScore: -1 }, { unique: false });
