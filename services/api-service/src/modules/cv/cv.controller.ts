@@ -82,7 +82,7 @@ export class CVController {
   async getListApplications(@Query() query: FilterApplicationsRequestDto): Promise<ResponseType> {
     return this.cvService.getListApplications(query);
   }
-
+  
   @Get('list-applications-for-recruiter')
   @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.RECRUITER)

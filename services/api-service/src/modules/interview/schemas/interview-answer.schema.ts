@@ -2,26 +2,17 @@ import { BaseSchema } from '@common/schemas';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
-// Định nghĩa cấu trúc cho điểm chi tiết theo từng tiêu chí
+// Bạn giữ nguyên các lớp này như là các interface hoặc class thuần túy
+// KHÔNG thêm @Schema() cho chúng nếu bạn không muốn chúng là schema riêng
 class CriterionScoreDetail {
-  @Prop({ required: true })
-  name: string; // Tên của tiêu chí (ví dụ: "analysis")
-
-  @Prop({ required: true })
-  score: number; // Điểm cho tiêu chí này
+  name: string;
+  score: number;
 }
 
-// Định nghĩa cấu trúc cho kết quả phân tích AI (tùy chọn)
 class AiAnalysisResult {
-  @Prop({ type: [String], default: [] })
-  identifiedKeywords?: string[]; // Các từ khóa AI nhận diện
-
-  @Prop({ type: String, nullable: true })
-  sentiment?: string; // Sắc thái (e.g., 'positive', 'negative', 'neutral')
-
-  @Prop({ type: String, nullable: true })
-  overallSuggestion?: string; // Gợi ý tổng quát từ AI
-  
+  identifiedKeywords?: string[];
+  sentiment?: string;
+  overallSuggestion?: string;
 }
 
 export type InterviewAnswerDocument = HydratedDocument<InterviewAnswer>;
@@ -48,7 +39,10 @@ export class InterviewAnswer extends BaseSchema {
 
   @Prop({
     type: {
-      criterionScores: [CriterionScoreDetail],
+      criterionScores: [{
+        name: { type: String, required: true },
+        score: { type: Number, required: true }
+      }],
       totalScoreForQuestion: { type: Number, nullable: true },
       feedbackComments: { type: String, nullable: true },
     },
@@ -69,10 +63,17 @@ export class InterviewAnswer extends BaseSchema {
   @Prop({ type: Date, nullable: true })
   evaluatedAt?: Date;
 
-  @Prop({ type: AiAnalysisResult, nullable: true })
+  @Prop({
+    type: {
+      identifiedKeywords: { type: [String], default: [] },
+      sentiment: { type: String, nullable: true },
+      overallSuggestion: { type: String, nullable: true },
+    },
+    nullable: true,
+  })
   aiAnalysis?: AiAnalysisResult;
 }
 
 export const InterviewAnswerSchema = SchemaFactory.createForClass(InterviewAnswer);
-InterviewAnswerSchema.index({ jdId: 1, questionId: 1, candidate: 1 }, { unique: true });
+InterviewAnswerSchema.index({ jdId: 1, questionId: 1, candidateId: 1 }, { unique: true });
 InterviewAnswerSchema.index({ evaluatorUserId: 1, submittedAt: 1, overallQuestionScore: -1 });
