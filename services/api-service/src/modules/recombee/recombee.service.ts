@@ -20,7 +20,8 @@ import {
     RecommendItemsToUser,
     RecommendUsersToUser,
     SetItemValues,
-    SetUserValues
+    SetUserValues,
+    DeleteItem,
 } from "recombee-api-client/lib/requests";
 
 @Injectable()
@@ -34,6 +35,7 @@ export class RecombeeService {
     ) {
         this.client = new ApiClient(env.recombee.DB_DEV, env.recombee.DEV_PRIVATE_TOKEN, { region: "ap-se" });
         // this.initializeProperties();
+        // this.client.send(new DeleteItem("685bb0804fd13a9ce0ea08de"))
     }
     async initializeProperties() {
         await this.addItemProperties();

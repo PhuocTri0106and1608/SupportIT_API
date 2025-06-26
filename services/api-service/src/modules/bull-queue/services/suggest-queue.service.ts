@@ -28,8 +28,8 @@ export class SuggestQueueService {
     ): Promise<{ result: boolean; error?: any }> {
         try {
             const jobOptions = {
-                priority: options?.priority || 1,
-                delay: options?.delay || 0,
+                priority: options?.priority || 2,
+                delay: options?.delay || 30000,
                 attempts: options?.attempts || 3,
                 removeOnComplete: options?.removeOnComplete !== undefined ? options.removeOnComplete : true,
                 removeOnFail: options?.removeOnFail !== undefined ? options.removeOnFail : false

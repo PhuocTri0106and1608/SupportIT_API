@@ -38,7 +38,7 @@ export class MailQueueService {
     ): Promise<{ result: boolean; error?: any }> {
         try {
             const jobOptions = {
-                priority: options?.priority || 1,
+                priority: options?.priority || 2,
                 delay: options?.delay || 0,
                 attempts: options?.attempts || 3,
                 removeOnComplete: options?.removeOnComplete !== undefined ? options.removeOnComplete : true,

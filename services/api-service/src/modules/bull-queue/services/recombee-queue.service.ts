@@ -33,7 +33,7 @@ export class RecombeeQueueService {
   ): Promise<InternalResponseType> {
     try {
       const jobOptions = {
-        priority: options?.priority || 1,
+        priority: options?.priority || 2,
         delay: options?.delay || 0,
         attempts: options?.attempts || 5,
         removeOnComplete: options?.removeOnComplete !== undefined ? options.removeOnComplete : true,
@@ -49,7 +49,7 @@ export class RecombeeQueueService {
     }
   }
 
-  async addJdToRecombee(data: AddJdData) {
+  async addJdToRecombee(data: AddJdData, ) {
     return this.addToQueue(RecombeeJobType.ADD_JD, data);
   }
 
@@ -66,7 +66,7 @@ export class RecombeeQueueService {
   }
 
   async addEvaluationToRecombee(data: AddEvaluationData) {
-    return this.addToQueue(RecombeeJobType.ADD_EVALUATION, data);
+    return this.addToQueue(RecombeeJobType.ADD_EVALUATION, data, { delay: 180000 });
   }
 
   async addInteractionToRecombee(data: AddInteractionData) {
