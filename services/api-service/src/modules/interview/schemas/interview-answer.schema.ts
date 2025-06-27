@@ -74,5 +74,5 @@ export class InterviewAnswer extends BaseSchema {
 }
 
 export const InterviewAnswerSchema = SchemaFactory.createForClass(InterviewAnswer);
-InterviewAnswerSchema.index({ jdId: 1, questionId: 1, candidate: 1 }, { unique: true });
+InterviewAnswerSchema.index({ jdId: 1, questionId: 1, candidateId: 1 }, { unique: true });
 InterviewAnswerSchema.index({ evaluatorUserId: 1, submittedAt: 1, overallQuestionScore: -1 });

@@ -12,6 +12,12 @@ export class InterviewResult extends BaseSchema {
   @Prop({ type: String, required: true })
   candidateId: string;
 
+  @Prop({ type: [String], default: [] })
+  completedQuestionIds: string[];
+
+  @Prop({ type: [String], default: [] })
+  answerIds: string[];
+
   @Prop({ type: Number, default: 0 })
   totalScore: number;
 
