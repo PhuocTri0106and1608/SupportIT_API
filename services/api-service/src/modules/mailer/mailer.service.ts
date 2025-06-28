@@ -86,7 +86,7 @@ export class MailerService implements OnModuleInit {
         }
     }
 
-    async sendApplicationEmail(userInfo: IUseEmailInfo, companyName: string, jobTitle: string, applicationStatus: string): Promise<InternalResponseType> {
+    async sendApplicationEmail(userInfo: IUseEmailInfo, companyName: string, jobTitle: string, applicationStatus: string, testSetLink: string): Promise<InternalResponseType> {
         const { email } = userInfo;
         const subject = "Application Status Update";
 
@@ -94,7 +94,8 @@ export class MailerService implements OnModuleInit {
             const html = this.templates.application({
                 companyName,
                 jobTitle,
-                applicationStatus
+                applicationStatus,
+                testSetLink
             });
 
             return this.sendEmail(email, subject, html);

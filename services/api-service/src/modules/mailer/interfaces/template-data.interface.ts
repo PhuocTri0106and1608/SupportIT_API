@@ -6,6 +6,7 @@ export interface ITemplatedData {
     companyName?: string;
     jobTitle?: string;
     applicationStatus?: string;
+    testSetLink?: string;
 }
 
 export interface ITemplates {

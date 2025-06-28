@@ -13,6 +13,7 @@ export enum EmailType {
 export interface EmailData {
     to: string;
     otp?: string;
+    testSetLink?: string;
     companyName?: string;
     jobTitle?: string;
     applicationStatus?: string;
@@ -88,6 +89,6 @@ export class MailQueueService {
     }
 
     async handleApplicationEmail(data: EmailData): Promise<InternalResponseType> {
-        return this.mailerService.sendApplicationEmail({ email: data.to }, data.companyName, data.jobTitle, data.applicationStatus);
+        return this.mailerService.sendApplicationEmail({ email: data.to }, data.companyName, data.jobTitle, data.applicationStatus, data.testSetLink);
     }
 }

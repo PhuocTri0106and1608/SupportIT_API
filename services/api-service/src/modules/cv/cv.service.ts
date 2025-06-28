@@ -9,9 +9,10 @@ import { CandidateRepository } from "@modules/candidate/repositories";
 import { Types } from "mongoose";
 import { env } from "@environments";
 import { RedisService } from "@modules/redis";
-import { CvProcessingQueueService, EmailType, MailQueueService, RecombeeQueueService, SuggestQueueService } from "@modules/bull-queue";
+import { CvProcessingQueueService, EmailData, EmailType, MailQueueService, RecombeeQueueService, SuggestQueueService } from "@modules/bull-queue";
 import { UserRepository } from "@modules/user";
 import { CvProcessingJobType, SuggestType } from "@modules/bull-queue/interfaces";
+import { TestSetRepository } from '../test-set/repositories/test-set.repository';
 
 @Injectable()
 export class CVService {
@@ -22,6 +23,7 @@ export class CVService {
     private readonly evaluationRepository: EvaluationRepository,
     private readonly applicationRepository: ApplicationRepository,
     private readonly candidateRepository: CandidateRepository,
+    private readonly testSetRepository: TestSetRepository,
     @Inject(forwardRef(() => UserRepository))
     private readonly userRepository: UserRepository,
     @Inject(forwardRef(() => RecombeeQueueService))
@@ -666,10 +668,15 @@ export class CVService {
       const cachePattern = 'applications:list:*';
       await this.redisService.deleteByPattern(cachePattern);
 
-      const user = await this.userRepository.findOne({ _id: new Types.ObjectId(application.candidateId) });
-      const emailData = {
+      const [user, testSet] = await Promise.all([
+        this.userRepository.findOne({ _id: new Types.ObjectId(application.candidateId) }),
+        this.testSetRepository.findOne({ jdId: jd._id.toString() })
+      ]);
+
+      const emailData: EmailData = {
         to: user.email,
         jobTitle: jd.title,
+        testSetLink: `http://localhost:5173/testset/${testSet._id.toString()}/${jd._id.toString()}/overview`,
         companyName: jd.companyName,
         applicationStatus: status,
       }
