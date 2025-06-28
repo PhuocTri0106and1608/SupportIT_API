@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TestSetController } from './test-set.controller';
 import { TestSet, TestSetSchema } from './schemas/test-set.schema';
@@ -15,7 +15,7 @@ import { TestSetResult, TestSetResultSchema } from './schemas';
   imports: [
     RedisModule,
     QuizModule,
-    CVModule,
+    forwardRef(() => CVModule),
     LeetCodeModule,
     JudgeModule,
     MongooseModule.forFeature([{ name: TestSet.name, schema: TestSetSchema }]),

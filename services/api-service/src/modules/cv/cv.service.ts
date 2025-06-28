@@ -23,6 +23,7 @@ export class CVService {
     private readonly evaluationRepository: EvaluationRepository,
     private readonly applicationRepository: ApplicationRepository,
     private readonly candidateRepository: CandidateRepository,
+    @Inject(forwardRef(() => TestSetRepository))
     private readonly testSetRepository: TestSetRepository,
     @Inject(forwardRef(() => UserRepository))
     private readonly userRepository: UserRepository,

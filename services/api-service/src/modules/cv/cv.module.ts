@@ -9,6 +9,7 @@ import { CandidateModule } from "@modules/candidate/candidate.module";
 import { MediaModule } from "@modules/media/media.module";
 import { BullQueueModule } from "@modules/bull-queue";
 import { UserModule } from "@modules/user";
+import { TestSetModule } from "@modules/test-set/test-set.module";
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { UserModule } from "@modules/user";
     RedisModule,
     CandidateModule,
     MediaModule,
+    forwardRef(() => TestSetModule),
     forwardRef(() => UserModule),
     forwardRef(() => BullQueueModule)
   ],

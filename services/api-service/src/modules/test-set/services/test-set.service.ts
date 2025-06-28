@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
 import { ResponseType } from "@common/dtos";
 import { CodeResponseEnum } from "@common/enums";
 import { TestSetRepository } from "../repositories";
@@ -18,6 +18,7 @@ export class TestSetService {
   constructor(
     private readonly testSetRepository: TestSetRepository,
     private readonly quizRepository: QuizRepository,
+    @Inject(forwardRef(() => JDRepository))
     private readonly jdRepository: JDRepository,
     private readonly problemRepository: LeetCodeProblemRepository,
     private readonly redisService: RedisService,
