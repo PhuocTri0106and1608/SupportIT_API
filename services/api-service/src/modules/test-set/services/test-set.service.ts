@@ -104,6 +104,7 @@ export class TestSetService {
       });
 
       const fullTestSet = {
+        _id: testSet._id.toString(),
         creatorUserId: testSet.creatorUserId,
         jdId: testSet.jdId,
         duration: testSet.duration,

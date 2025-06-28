@@ -29,6 +29,10 @@ export class UpdateTestSetDto extends LinkTestSetDto {}
 export class TestSetResponseDto {
   @Expose()
   @ApiProperty()
+  _id: string;
+
+  @Expose()
+  @ApiProperty()
   creatorUserId: string;
 
   @Expose()
