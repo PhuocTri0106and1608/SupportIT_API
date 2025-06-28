@@ -6,7 +6,7 @@ import { InterviewService } from "./interview.service";
 import { ResponseType } from "@common/dtos";
 import { AnyRoleGuard, RolesGuard } from "@modules/auth/guards";
 import { LoginRoleEnum } from "@common/enums";
-import { CandidateAnswerDto, CreateInterviewQuestionDto, FilterInterviewQuestionRequestDto, InterviewMarkDto } from "./dtos";
+import { CandidateAnswerDto, CreateInterviewQuestionDto, FilterInterviewAnswerRequestDto, FilterInterviewQuestionRequestDto, FilterInterviewResultRequestDto, InterviewMarkDto } from "./dtos";
 
 @Controller("interviews")
 @ApiTags("Interview Questions")
@@ -22,12 +22,12 @@ export class InterviewController {
     return this.interviewService.createInterviewQuestion(creatorUserId, request);
   }
 
-  @Post("createCandidateAnswer")
+  @Post("submitCandidateAnswer")
   @UseGuards(AuthGuard, RolesGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE)
   @ApiOkResponseCustom(ResponseType)
-  async createCandidateAnswer(@CurrentUser("id") candidateId: string, @Body() request: CandidateAnswerDto): Promise<ResponseType> {
-    return this.interviewService.createCandidateAnswer(candidateId, request);
+  async submitCandidateAnswer(@CurrentUser("id") candidateId: string, @Body() request: CandidateAnswerDto): Promise<ResponseType> {
+    return this.interviewService.submitCandidateAnswer(candidateId, request);
   }
 
   @Post("markCandidateAnswer")
@@ -42,8 +42,24 @@ export class InterviewController {
   @UseGuards(AuthGuard, AnyRoleGuard)
   @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
   @ApiOkResponseCustom(ResponseType)
-  async getListInterviews(@Query() query: FilterInterviewQuestionRequestDto): Promise<ResponseType> {
+  async getListInterviewQuestions(@Query() query: FilterInterviewQuestionRequestDto): Promise<ResponseType> {
     return this.interviewService.getListInterviewQuestions(query);
+  }
+
+  @Get("getListInterviewAnswers")
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
+  @ApiOkResponseCustom(ResponseType)
+  async getListInterviewAnswers(@Query() query: FilterInterviewAnswerRequestDto): Promise<ResponseType> {
+    return this.interviewService.getListInterviewAnswers(query);
+  }
+
+  @Get("getListInterviewResults")
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.CANDIDATE, LoginRoleEnum.RECRUITER)
+  @ApiOkResponseCustom(ResponseType)
+  async getListInterviewResults(@Query() query: FilterInterviewResultRequestDto): Promise<ResponseType> {
+    return this.interviewService.getListInterviewResults(query);
   }
 
 }
