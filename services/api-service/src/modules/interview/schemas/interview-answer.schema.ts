@@ -2,8 +2,6 @@ import { BaseSchema } from '@common/schemas';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
-// Bạn giữ nguyên các lớp này như là các interface hoặc class thuần túy
-// KHÔNG thêm @Schema() cho chúng nếu bạn không muốn chúng là schema riêng
 class CriterionScoreDetail {
   name: string;
   score: number;
