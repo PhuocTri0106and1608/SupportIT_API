@@ -18,6 +18,10 @@ class ATSCheck {
   @IsArray()
   @IsString({ each: true })
   recommendations: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  missing_keywords: string[];
 }
 
 class SkillsAnalysis {
@@ -43,8 +47,8 @@ class Summary {
 
 @Schema({ _id: false, versionKey: false })
 export class ReviewCVResponse {
-  @Prop({ type: String })
-  ai_review: string;
+  @Prop({  })
+  ai_review: any;
 
   @Prop({ type: Object })
   @Type(() => ATSCheck)
