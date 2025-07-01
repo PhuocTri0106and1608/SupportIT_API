@@ -47,7 +47,7 @@ class Summary {
 
 @Schema({ _id: false, versionKey: false })
 export class ReviewCVResponse {
-  @Prop({  })
+  @Prop({ type: Object })
   ai_review: any;
 
   @Prop({ type: Object })
