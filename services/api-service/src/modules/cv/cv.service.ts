@@ -52,8 +52,8 @@ export class CVService {
       if (isRecruiter && jd.visibility === "public") {
         const jdDataForQueue = JSON.parse(JSON.stringify(createdJD));
 
-        this.recombeeQueueService.addJdToRecombee({ jd: jdDataForQueue });
-        this.recombeeQueueService.createJobIdealCandidateInRecombee({
+        await this.recombeeQueueService.addJdToRecombee({ jd: jdDataForQueue });
+        await this.recombeeQueueService.createJobIdealCandidateInRecombee({
           jdId: createdJD._id.toString(),
         });
       }
@@ -79,8 +79,8 @@ export class CVService {
       if (isRecruiter && jd.visibility === "public") {
         const jdDataForQueue = JSON.parse(JSON.stringify(updatedJD));
 
-        this.recombeeQueueService.addJdToRecombee({ jd: jdDataForQueue });
-        this.recombeeQueueService.createJobIdealCandidateInRecombee({
+        await this.recombeeQueueService.addJdToRecombee({ jd: jdDataForQueue });
+        await this.recombeeQueueService.createJobIdealCandidateInRecombee({
           jdId: updatedJD._id.toString(),
         });
       }
@@ -136,7 +136,7 @@ export class CVService {
       const cvDataForQueue = JSON.parse(JSON.stringify(createdCV));
       const candidateDataForQueue = JSON.parse(JSON.stringify(candidate));
       
-      Promise.allSettled([
+      await Promise.allSettled([
         this.redisService.set(`cv:${createdCV._id}`, createdCV, { ttl: 3600 }),
         this.recombeeQueueService.addCvToRecombee({ cv: cvDataForQueue }),
         this.recombeeQueueService.addCandidateToRecombee({ candidate: candidateDataForQueue }),
@@ -294,7 +294,7 @@ export class CVService {
       };
       const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
 
-      Promise.allSettled([
+      await Promise.allSettled([
         this.suggestQueueService.addToQueue(
           SuggestType.SKILL_SUGGESTION,
           { userId, requestedSkills }
@@ -681,8 +681,8 @@ export class CVService {
         companyName: jd.companyName,
         applicationStatus: status,
       }
-      this.mailQueueService.addToQueue(EmailType.APPLICATION_STATUS, emailData);
-      this.recombeeQueueService.addInteractionToRecombee({
+      await this.mailQueueService.addToQueue(EmailType.APPLICATION_STATUS, emailData);
+      await this.recombeeQueueService.addInteractionToRecombee({
         userId: application.candidateId,
         itemId: jd._id.toString(),
         interactionType: status,

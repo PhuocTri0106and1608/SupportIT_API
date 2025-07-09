@@ -105,7 +105,7 @@ export class CvProcessingProcessor extends WorkerHost {
       };
       const evaluationDataForQueue = JSON.parse(JSON.stringify(evaluation));
 
-      Promise.allSettled([
+      await Promise.allSettled([
         this.suggestQueueService.addToQueue(
           SuggestType.SKILL_SUGGESTION,
           { userId, requestedSkills }
