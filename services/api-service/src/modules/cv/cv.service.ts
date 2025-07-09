@@ -484,43 +484,44 @@ export class CVService {
     }
   }
   async getListJDs(query: FilterJDsRequestDto): Promise<ResponseType> {
-    const { page = 1, limit = 10, creatorUserId, title, companyName, location, visibility, skill, verified } = query;
-    const skip = (page - 1) * limit;
+  const { page = 1, limit = 10, creatorUserId, title, companyName, location, visibility, skill, verified } = query;
+  const skip = (page - 1) * limit;
 
-    try {
-      const filter: any = { deletedAt: null };
-      if (creatorUserId) filter.creatorUserId = creatorUserId;
-      if (title) filter.title = { $regex: title, $options: "i" };
-      if (companyName) filter.companyName = { $regex: companyName, $options: "i" };
-      if (location) filter.location = { $regex: location, $options: "i" };
-      if (visibility) filter.visibility = visibility;
-      if (verified) filter.verified = verified;
-      if (skill) filter['requirements.skills'] = { $in: [skill] };
+  try {
+    const filter: any = { deletedAt: null };
+    if (creatorUserId) filter.creatorUserId = creatorUserId;
+    if (title) filter.title = { $regex: title, $options: "i" };
+    if (companyName) filter.companyName = { $regex: companyName, $options: "i" };
+    if (location) filter.location = { $regex: location, $options: "i" };
+    if (visibility) filter.visibility = visibility;
+    if (typeof verified === 'boolean') filter.verified = verified;
+    if (skill) filter['requirements.skills'] = { $in: [skill] };
 
-      const cacheKey = `jds:list:page=${page}:limit=${limit}:${JSON.stringify(query)}`;
+    const cacheKey = `jds:list:page=${page}:limit=${limit}:${JSON.stringify(query)}`;
 
-      const cached = await this.redisService.get<any>(cacheKey);
-      if (cached) {
-        return { code: CodeResponseEnum.SUCCESS, data: cached };
-      }
-
-      const [jds, total] = await Promise.all([
-        this.jdRepository.findWithPagination(filter, skip, limit, true, '-requirements'),
-        this.jdRepository.countDocuments(filter),
-      ]);
-
-      const resultData = {
-        items: jds,
-        meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
-      };
-
-      await this.redisService.set(cacheKey, resultData, { ttl: 60 });
-
-      return { code: CodeResponseEnum.SUCCESS, data: resultData };
-    } catch (error) {
-      throw new HttpException("getListJDs error", HttpStatus.INTERNAL_SERVER_ERROR, { cause: error });
+    const cached = await this.redisService.get<any>(cacheKey);
+    if (cached) {
+      return { code: CodeResponseEnum.SUCCESS, data: cached };
     }
+
+    const [jds, total] = await Promise.all([
+      this.jdRepository.findWithPagination(filter, skip, limit, true, '-requirements'),
+      this.jdRepository.countDocuments(filter),
+    ]);
+
+    const resultData = {
+      items: jds,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+
+    await this.redisService.set(cacheKey, resultData, { ttl: 60 });
+
+    return { code: CodeResponseEnum.SUCCESS, data: resultData };
+  } catch (error) {
+    throw new HttpException("getListJDs error", HttpStatus.INTERNAL_SERVER_ERROR, { cause: error });
   }
+}
+
   async getApplicationById(id: string): Promise<ResponseType> {
     try {
       const application = await this.applicationRepository.findApplicationById(id);
