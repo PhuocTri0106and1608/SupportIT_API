@@ -10,6 +10,7 @@ import { QuizService } from "@modules/quizz/quiz.service";
 import { SubmitCodeDto } from "@modules/judge/dto";
 import { JudgeService } from "@modules/judge/judge.service";
 import { ApplicationRepository } from "@modules/cv/repositories";
+import { UserRepository } from "@modules/user";
 
 @Injectable()
 export class TestSetResultService {
@@ -18,6 +19,7 @@ export class TestSetResultService {
     private readonly testSetResultRepository: TestSetResultRepository,
     private readonly testSetRepository: TestSetRepository,
     private readonly applicationRepository: ApplicationRepository,
+    private readonly userRepository: UserRepository,
     private readonly quizService: QuizService,
     private readonly judgeService: JudgeService,
     private readonly redisService: RedisService,
@@ -201,13 +203,49 @@ export class TestSetResultService {
     try {
       const applications = await this.applicationRepository.findApplicationByJdId(jdId);
       const candidateIds = applications.map(app => app.candidateId);
-      const testSet = await this.testSetRepository.findOne({ jdId });
 
-      const testSetResults = await this.testSetResultRepository.findResultsByTestSetIdAndCandidateId(testSet._id.toString(), candidateIds);
+      if (!candidateIds.length) {
+        return {
+          code: CodeResponseEnum.SUCCESS,
+          data: [],
+        };
+      }
+
+      const testSet = await this.testSetRepository.findOne({ jdId });
+      if (!testSet) {
+        return {
+          code: CodeResponseEnum.SUCCESS,
+          data: [],
+        };
+      }
+
+      const testSetResults = await this.testSetResultRepository.findResultsByTestSetIdAndCandidateId(
+        testSet._id.toString(),
+        candidateIds
+      );
+
+      // Lấy cả name và email
+      const users = await this.userRepository.findAndCustomSelect(
+        { _id: { $in: candidateIds.map(id => new Types.ObjectId(id)) } },
+        { name: 1, email: 1 }
+      );
+
+      // Map userId -> { name, email }
+      const userMap = new Map(users.map((u: any) => [u._id.toString(), { name: u.name, email: u.email }]));
+
+      // Gắn userName và email vào từng kết quả
+      const resultsWithUserInfo = testSetResults.map((result: any) => {
+        const user = userMap.get(result.candidateId?.toString() || "");
+        return {
+          ...result.toObject?.() ?? result,
+          userName: user?.name || null,
+          userEmail: user?.email || null,
+        };
+      });
 
       return {
         code: CodeResponseEnum.SUCCESS,
-        data: testSetResults,
+        data: resultsWithUserInfo,
       };
     } catch (error) {
       throw new HttpException(`getTestSetResultsByJdId error: ${error}`, HttpStatus.INTERNAL_SERVER_ERROR, {

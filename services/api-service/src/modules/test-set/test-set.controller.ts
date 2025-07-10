@@ -101,8 +101,8 @@ export class TestSetController {
   }
 
   @Get("getTestSetResultsByJd/:jdId")
-  // @UseGuards(AuthGuard, AnyRoleGuard)
-  // @AnyRole(LoginRoleEnum.CANDIDATE)
+  @UseGuards(AuthGuard, AnyRoleGuard)
+  @AnyRole(LoginRoleEnum.RECRUITER)
   @ApiOkResponseCustom(ResponseType)
   async getTestSetResultsByJdId(@Param("jdId") jdId: string): Promise<ResponseType> {
     return this.testSetResultService.getTestSetResultsByJdId(jdId);

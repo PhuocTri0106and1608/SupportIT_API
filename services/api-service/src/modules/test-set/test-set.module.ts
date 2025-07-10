@@ -10,6 +10,7 @@ import { CVModule } from '@modules/cv/cv.module';
 import { TestSetResultService, TestSetService } from './services';
 import { JudgeModule } from '@modules/judge/judge.module';
 import { TestSetResult, TestSetResultSchema } from './schemas';
+import { UserModule } from '@modules/user';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TestSetResult, TestSetResultSchema } from './schemas';
     forwardRef(() => CVModule),
     LeetCodeModule,
     JudgeModule,
+    forwardRef(() => UserModule),
     MongooseModule.forFeature([{ name: TestSet.name, schema: TestSetSchema }]),
     MongooseModule.forFeature([{ name: TestSetResult.name, schema: TestSetResultSchema }])
   ],
