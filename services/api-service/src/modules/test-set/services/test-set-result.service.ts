@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { ResponseType } from "@common/dtos";
 import { CodeResponseEnum } from "@common/enums";
-import { TestSetResultRepository } from "../repositories";
+import { TestSetRepository, TestSetResultRepository } from "../repositories";
 import { RedisService } from "@modules/redis";
 import { Types } from "mongoose";
 import { TestSetResult } from "../schemas";
@@ -9,12 +9,15 @@ import { SubmitQuizDto } from "@modules/quizz/dtos";
 import { QuizService } from "@modules/quizz/quiz.service";
 import { SubmitCodeDto } from "@modules/judge/dto";
 import { JudgeService } from "@modules/judge/judge.service";
+import { ApplicationRepository } from "@modules/cv/repositories";
 
 @Injectable()
 export class TestSetResultService {
 
   constructor(
     private readonly testSetResultRepository: TestSetResultRepository,
+    private readonly testSetRepository: TestSetRepository,
+    private readonly applicationRepository: ApplicationRepository,
     private readonly quizService: QuizService,
     private readonly judgeService: JudgeService,
     private readonly redisService: RedisService,
@@ -189,6 +192,25 @@ export class TestSetResultService {
         throw error;
       }
       throw new HttpException("getTestSetResultById error", HttpStatus.INTERNAL_SERVER_ERROR, {
+        cause: error,
+      });
+    }
+  }
+
+  async getTestSetResultsByJdId(jdId: string): Promise<ResponseType> {
+    try {
+      const applications = await this.applicationRepository.findApplicationByJdId(jdId);
+      const candidateIds = applications.map(app => app.candidateId);
+      const testSet = await this.testSetRepository.findOne({ jdId });
+
+      const testSetResults = await this.testSetResultRepository.findResultsByTestSetIdAndCandidateId(testSet._id.toString(), candidateIds);
+
+      return {
+        code: CodeResponseEnum.SUCCESS,
+        data: testSetResults,
+      };
+    } catch (error) {
+      throw new HttpException(`getTestSetResultsByJdId error: ${error}`, HttpStatus.INTERNAL_SERVER_ERROR, {
         cause: error,
       });
     }

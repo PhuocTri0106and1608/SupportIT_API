@@ -168,4 +168,8 @@ export class ApplicationRepository extends BaseMongoRepository<Application> {
 
     return this._model.aggregate(pipeline);
   }
+
+  async findApplicationByJdId(jdId: string): Promise<any> {
+    return this._model.find({ jdId }).select("candidateId").lean();
+  }
 }

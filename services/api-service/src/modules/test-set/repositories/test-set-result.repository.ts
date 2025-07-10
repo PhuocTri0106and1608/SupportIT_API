@@ -10,4 +10,11 @@ export class TestSetResultRepository extends BaseMongoRepository<TestSetResult> 
     super(testSetResultModel);
   }
 
+  async findResultsByTestSetIdAndCandidateId(testSetId: string, candidateIds: string[]): Promise<any> {
+    return this.testSetResultModel.find({
+      testSetId,
+      submitted: true,
+      candidateId: { $in: candidateIds }
+    }).sort({ finalScore: -1 }).lean();
+  }
 }

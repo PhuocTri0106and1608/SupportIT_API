@@ -99,4 +99,12 @@ export class TestSetController {
   async getTestSetResult(@Param("testSetResultId") testSetResultId: string): Promise<ResponseType> {
     return this.testSetResultService.getTestSetResultById(testSetResultId);
   }
+
+  @Get("getTestSetResultsByJd/:jdId")
+  // @UseGuards(AuthGuard, AnyRoleGuard)
+  // @AnyRole(LoginRoleEnum.CANDIDATE)
+  @ApiOkResponseCustom(ResponseType)
+  async getTestSetResultsByJdId(@Param("jdId") jdId: string): Promise<ResponseType> {
+    return this.testSetResultService.getTestSetResultsByJdId(jdId);
+  }
 }
